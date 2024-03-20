@@ -182,8 +182,8 @@ void setup() {
 /* ------------------------------------------------------------------------- *
  *                                                     Logarithmic functions
  * ------------------------------------------------------------------------- */
-void LOG10()  { stack[X] = log10(stack[X]); }     //  natural log OF x
-void TENtoX() { stack[X] = pow(10, stack[X]); }   // e TO THE POWER OF x 
+void LOG10()  { stack[X] = log10(stack[X]); }     // 10 log OF x
+void TENtoX() { stack[X] = pow(10, stack[X]); }   // 10 TO THE POWER OF x 
 void LOG()    { stack[X] = log(stack[X]); }       // natural log OF x
 void EtoX()   { stack[X] = pow(E, stack[X]); }    // e TO THE POWER OF x
 
@@ -233,7 +233,7 @@ void DIVIDE()  {                                  // Divide
 }
 
 /* ------------------------------------------------------------------------- *
- *                                                    Goiniometric functions
+ *                                                     Goniometric functions
  * ------------------------------------------------------------------------- */
 void SIN() {                                      // Sine
   double angle;
