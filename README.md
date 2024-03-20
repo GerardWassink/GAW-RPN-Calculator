@@ -17,7 +17,7 @@
 - OneOverX()      // 1 / X
 - CHS()           // Change Sign
 - ABS()           // Absolute value
-- POW()           // X to the power of Y
+- POW()           // Y to the power of X
 - ADD()           // Add X to Y
 - SUBTRACT()      // Subtract Y from X
 - MULTIPLY()      // Multiply Y by X

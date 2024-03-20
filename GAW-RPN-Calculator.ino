@@ -119,7 +119,6 @@ void setup() {
     delay(1000);
   }
 
-
   // -----------------------------------
   // ------------ TEST AREA ------------
 #if DEBUG == 1
@@ -128,28 +127,7 @@ void setup() {
   FIX(9);
   showStack();
 
-  RAD();
-  showStack();
-
-  push(PI/4);
-  showStack();
-
-  SIN();
-  showStack();
-
-  ASIN();
-  showStack();
-
-  COS();
-  showStack();
-
-  ACOS();
-  showStack();
-
-  TAN();
-  showStack();
-
-  ATAN();
+  push(E);
   showStack();
 
 #endif
@@ -177,8 +155,15 @@ void OneOverX()   { stack[X] = 1 / stack[X]; }    // 1 / X
 void CHS()   { stack[X] = -1 * stack[X]; }        // Change Sign
 void ABS()   { stack[X] = abs(stack[X]); }        // Absolute value
 
-void POW()  {                                     // X to the power of Y
+void POW()  {                                     // Y to the power of X
   double temp = pow(stack[Y], stack[X]);
+  stack[X] = stack[T];
+  rollDown();
+  stack[X] = temp;
+}
+
+void PERCENT()  {                                     // Y to the power of X
+  double temp = stack[Y] * stack[X] / 100;
   stack[X] = stack[T];
   rollDown();
   stack[X] = temp;
@@ -366,7 +351,7 @@ void showStack() {
 
   switch (gonioStatus) {
     case statDEG:
-      LCD_display(display, 3, 4, F("deg ") );
+      LCD_display(display, 3, 4, F("    ") );
       break;
     case statGRD:
       LCD_display(display, 3, 4, F("grad") );
