@@ -89,7 +89,6 @@ int precision = 4;
  *                                                                    loop()
  * ------------------------------------------------------------------------- */
 void loop() {
-  // put your main code here, to run repeatedly:
 
 }
 
@@ -122,59 +121,23 @@ void setup() {
   }
 
 
-// -----------------------------------
-// ------------ TEST AREA ------------
+  // -----------------------------------
+  // ------------ TEST AREA ------------
 #if DEBUG == 1
   showStack();
 
   FIX(9);
   showStack();
 
-  push(1);
-  showStack();
-
-  push(2);
-  showStack();
-
-  push(3);
-  showStack();
-
-  push(4);
-  showStack();
-
-  ADD();
-  showStack();
-
-  SUBTRACT();
-  showStack();
-
-  MULTIPLY();
-  showStack();
-
-  DIVIDE();
-  showStack();
-
   push(3);
   showStack();
 
   push(2);
-  showStack();
-
-  POW();
-  showStack();
-
-  OneOverX();
-  showStack();
-
-  CHS();
-  showStack();
-
-  ABS();
   showStack();
 
 #endif
-// ------------ TEST AREA ------------
-// -----------------------------------
+  // ------------ TEST AREA ------------
+  // -----------------------------------
 
 }
 
@@ -239,10 +202,10 @@ void SIN() {                                      // Sine
   double angle;
   switch (gonioStatus) {
     case statDEG:
-      stack[X] = sin(stack[X]*2*PI/360);
+      stack[X] = sin(stack[X]*2*PI/360);          // Degrees to radians
       break;
     case statGRD:
-      stack[X] = sin(stack[X]*2*PI/400);
+      stack[X] = sin(stack[X]*2*PI/400);          // Gradians to radians
       break;
     case statRAD:
       stack[X] = sin(stack[X]);
@@ -256,10 +219,10 @@ void COS() {                                      // Cosine
   double angle;
   switch (gonioStatus) {
     case statDEG:
-      stack[X] = cos(stack[X]*2*PI/360);
+      stack[X] = cos(stack[X]*2*PI/360);          // Degrees to radians
       break;
     case statGRD:
-      stack[X] = cos(stack[X]*2*PI/400);
+      stack[X] = cos(stack[X]*2*PI/400);          // Gradians to radians
       break;
     case statRAD:
       stack[X] = cos(stack[X]);
@@ -273,10 +236,10 @@ void TAN() {                                      // Tangent
   double angle;
   switch (gonioStatus) {
     case statDEG:
-      stack[X] = tan(stack[X]*2*PI/360);
+      stack[X] = tan(stack[X]*2*PI/360);          // Degrees to radians
       break;
     case statGRD:
-      stack[X] = tan(stack[X]*2*PI/400);
+      stack[X] = tan(stack[X]*2*PI/400);          // Gradians to radians
       break;
     case statRAD:
       stack[X] = tan(stack[X]);
@@ -292,7 +255,7 @@ void TAN() {                                      // Tangent
  * ------------------------------------------------------------------------- */
 void FIX(int val) { precision = val; }
 
-void DEG() { gonioStatus = statDEG; }             // Calc in degrees
+void DEG() { gonioStatus = statDEG; }             // Calc in Degrees
 void RAD() { gonioStatus = statRAD; }             // Calc in Radians
 void GRD() { gonioStatus = statGRD; }             // Calc in Gradians
 
@@ -315,7 +278,7 @@ void rollDown() {                                 // Roll stack down
   stack[T] = f;
 }
 
-void rollUp() {                                 // Roll stack up
+void rollUp() {                                   // Roll stack up
   double f = stack[T];
   stack[T] = stack[Z];
   stack[Z] = stack[Y];
@@ -330,12 +293,12 @@ void rollUp() {                                 // Roll stack up
 void showStack() {
   String myString = "Y: ";
   myString.concat(String(stack[Y], precision));
-  myString.concat("                    ");
+  myString.concat(F("                    "));
   LCD_display(display, 1, 0, myString.substring(0,20) );
 
   myString = "X: ";
   myString.concat(String(stack[X], precision));
-  myString.concat("                    ");
+  myString.concat(F("                    "));
   LCD_display(display, 2, 0, myString.substring(0,20) );
 }
 
