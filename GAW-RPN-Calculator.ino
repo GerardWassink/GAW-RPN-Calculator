@@ -84,7 +84,6 @@ int X=0, Y=1, Z=2, T=3;
  * ------------------------------------------------------------------------- */
 int precision = 4;
 
-
 /* ------------------------------------------------------------------------- *
  *                                                                    loop()
  * ------------------------------------------------------------------------- */
@@ -105,7 +104,7 @@ void setup() {
   //
   // Assemble and show intro text and versionb
   //
-  LCD_display(display, 0, 0, F("GAW RPN calc "));
+  LCD_display(display, 0, 0, "GAW RPN calc ");
   String myString = "v";
   myString.concat(progVersion);
   myString.concat("          ");
@@ -129,10 +128,28 @@ void setup() {
   FIX(9);
   showStack();
 
-  push(3);
+  RAD();
   showStack();
 
-  push(2);
+  push(PI/4);
+  showStack();
+
+  SIN();
+  showStack();
+
+  ASIN();
+  showStack();
+
+  COS();
+  showStack();
+
+  ACOS();
+  showStack();
+
+  TAN();
+  showStack();
+
+  ATAN();
   showStack();
 
 #endif
@@ -215,8 +232,23 @@ void SIN() {                                      // Sine
   }
 }
 
+void ASIN() {                                      // Arc Sine
+  switch (gonioStatus) {
+    case statDEG:
+      stack[X] = asin(stack[X])*360/(2*PI);          // Degrees to radians
+      break;
+    case statGRD:
+      stack[X] = asin(stack[X])*400/(2*PI);          // Gradians to radians
+      break;
+    case statRAD:
+      stack[X] = asin(stack[X]);
+      break;
+    default:
+      break;
+  }
+}
+
 void COS() {                                      // Cosine
-  double angle;
   switch (gonioStatus) {
     case statDEG:
       stack[X] = cos(stack[X]*2*PI/360);          // Degrees to radians
@@ -232,8 +264,23 @@ void COS() {                                      // Cosine
   }
 }
 
+void ACOS() {                                      // Arc Cosine
+  switch (gonioStatus) {
+    case statDEG:
+      stack[X] = acos(stack[X])*360/(2*PI);          // Degrees to radians
+      break;
+    case statGRD:
+      stack[X] = acos(stack[X])*400/(2*PI);          // Gradians to radians
+      break;
+    case statRAD:
+      stack[X] = acos(stack[X]);
+      break;
+    default:
+      break;
+  }
+}
+
 void TAN() {                                      // Tangent
-  double angle;
   switch (gonioStatus) {
     case statDEG:
       stack[X] = tan(stack[X]*2*PI/360);          // Degrees to radians
@@ -243,6 +290,22 @@ void TAN() {                                      // Tangent
       break;
     case statRAD:
       stack[X] = tan(stack[X]);
+      break;
+    default:
+      break;
+  }
+}
+
+void ATAN() {                                      // Arc Tangent
+  switch (gonioStatus) {
+    case statDEG:
+      stack[X] = atan(stack[X])*360/(2*PI);          // Degrees to radians
+      break;
+    case statGRD:
+      stack[X] = atan(stack[X])*400/(2*PI);          // Gradians to radians
+      break;
+    case statRAD:
+      stack[X] = atan(stack[X]);
       break;
     default:
       break;
@@ -300,6 +363,20 @@ void showStack() {
   myString.concat(String(stack[X], precision));
   myString.concat(F("                    "));
   LCD_display(display, 2, 0, myString.substring(0,20) );
+
+  switch (gonioStatus) {
+    case statDEG:
+      LCD_display(display, 3, 4, F("deg ") );
+      break;
+    case statGRD:
+      LCD_display(display, 3, 4, F("grad") );
+      break;
+    case statRAD:
+      LCD_display(display, 3, 4, F("rad ") );
+      break;
+    default:
+      break;
+  }
 }
 
 
