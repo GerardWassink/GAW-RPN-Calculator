@@ -22,6 +22,7 @@
 - SUBTRACT()      // Subtract Y from X
 - MULTIPLY()      // Multiply Y by X
 - DIVIDE()        // Divide Y by X
+- PERCENT()       // Take X perecnt of Y
 
 ### Goniometric
 

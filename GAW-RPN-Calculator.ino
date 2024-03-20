@@ -162,7 +162,7 @@ void POW()  {                                     // Y to the power of X
   stack[X] = temp;
 }
 
-void PERCENT()  {                                     // Y to the power of X
+void PERCENT()  {                                     // Take X perecnt of Y
   double temp = stack[Y] * stack[X] / 100;
   stack[X] = stack[T];
   rollDown();
