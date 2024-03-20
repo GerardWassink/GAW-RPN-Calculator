@@ -28,6 +28,9 @@
 - SIN()           // Sine of X
 - COS()           // Cosine of X
 - TAN()           // Tangent of X
+- ASIN()          // Arcsine of X
+- ACOS()          // Arccosine of X
+- ATAN()          // Arctangent of X
 
 ### Calculator
 
