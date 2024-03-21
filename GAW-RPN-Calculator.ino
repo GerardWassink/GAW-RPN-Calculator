@@ -47,6 +47,12 @@
 
 
 /* ------------------------------------------------------------------------- *
+ *       Definitions for the keyboard
+ * ------------------------------------------------------------------------- */
+#define ROWS 5                              // five rows for keyboard
+#define COLS 8                              // eight columns for keyboard
+
+/* ------------------------------------------------------------------------- *
  *                                                         Include libraries
  * ------------------------------------------------------------------------- */
 #include <Wire.h>                       // I2C comms library
@@ -55,6 +61,10 @@
 #include <String.h>                     // String library
 
 #include <math.h>                       // Arduino math library
+
+#include <Keypad.h>                     // Keypad library
+
+#include <EEPROM.h>                     // EEPROM library to save settings
 
 /* ------------------------------------------------------------------------- *
  *                                                            Create objects
@@ -78,11 +88,30 @@ double E = 2.718281828459045;
 double stack[4] = {0, 0, 0, 0};
 int X=0, Y=1, Z=2, T=3;
 
+/* ------------------------------------------------------------------------- *
+ *                                                   Define keypad variables
+ *  Conforming to a HP-15C calculator
+ *  Key values indicate row and column number
+ * ------------------------------------------------------------------------- */
+  char keys[ROWS][COLS] = {
+    {0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18},
+    {0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28},
+    {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38},
+    {0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48}
+  };
+  byte rowPins[ROWS] = {2,3,4,5,6};               // row pins of the keypad
+  byte colPins[COLS] = {7,8,9,10,11,12,13,17};    // column pins of the keypad
+  
+/* ------------------------------------------------------------------------- *
+ *       Create object for Keypad
+ * ------------------------------------------------------------------------- */
+  Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS);
+
 
 /* ------------------------------------------------------------------------- *
  *                                                      Calculator variables
  * ------------------------------------------------------------------------- */
-int precision = 4;
+int precision = 4;                                // default precision = 4
 
 /* ------------------------------------------------------------------------- *
  *                                                                    loop()
@@ -124,13 +153,12 @@ void setup() {
   // -----------------------------------
   // ------------ TEST AREA ------------
 #if DEBUG == 1
+
+  FIX(9);
   showStack();
 
   String test1 = "-123.456789";
   double TEST1 = test1.toDouble();
-
-  FIX(9);
-  showStack();
 
   push(TEST1);
   showStack();
