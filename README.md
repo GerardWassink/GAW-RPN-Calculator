@@ -36,6 +36,9 @@
 ### Calculator
 
 - FIX(int)        // set precision
+- DEG()           // switch mode to Degrees
+- RAD()           // switch mode to Radians
+- GRD()           // switch mode to Gradians
 - swapXY()        // Exchange values of X and Y
 - push(double)    // Push number on stack
 - rollDown()      // Roll stack down
