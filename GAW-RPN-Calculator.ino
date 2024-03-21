@@ -110,6 +110,7 @@ void setup() {
   myString.concat("          ");
   LCD_display(display, 0, 13, myString.substring(0,20) );
 
+#if DEBUG == 0
   //
   // Leave intro screen for 3 seconds
   //
@@ -118,16 +119,26 @@ void setup() {
     LCD_display(display, 2, t, "." );
     delay(1000);
   }
+#endif
 
   // -----------------------------------
   // ------------ TEST AREA ------------
 #if DEBUG == 1
   showStack();
 
+  String test1 = "-123.456789";
+  double TEST1 = test1.toDouble();
+
   FIX(9);
   showStack();
 
   push(E);
+  showStack();
+
+  push(PI);
+  showStack();
+
+  push(TEST1);
   showStack();
 
 #endif
@@ -217,13 +228,13 @@ void SIN() {                                      // Sine
   }
 }
 
-void ASIN() {                                      // Arc Sine
+void ASIN() {                                     // Arc Sine
   switch (gonioStatus) {
     case statDEG:
-      stack[X] = asin(stack[X])*360/(2*PI);          // Degrees to radians
+      stack[X] = asin(stack[X])*360/(2*PI);       // Radians to Degrees
       break;
     case statGRD:
-      stack[X] = asin(stack[X])*400/(2*PI);          // Gradians to radians
+      stack[X] = asin(stack[X])*400/(2*PI);       // Radians to Gradians
       break;
     case statRAD:
       stack[X] = asin(stack[X]);
@@ -249,13 +260,13 @@ void COS() {                                      // Cosine
   }
 }
 
-void ACOS() {                                      // Arc Cosine
+void ACOS() {                                     // Arc Cosine
   switch (gonioStatus) {
     case statDEG:
-      stack[X] = acos(stack[X])*360/(2*PI);          // Degrees to radians
+      stack[X] = acos(stack[X])*360/(2*PI);       // Radians to Degrees
       break;
     case statGRD:
-      stack[X] = acos(stack[X])*400/(2*PI);          // Gradians to radians
+      stack[X] = acos(stack[X])*400/(2*PI);       // Radians to Gradians
       break;
     case statRAD:
       stack[X] = acos(stack[X]);
@@ -281,13 +292,13 @@ void TAN() {                                      // Tangent
   }
 }
 
-void ATAN() {                                      // Arc Tangent
+void ATAN() {                                     // Arc Tangent
   switch (gonioStatus) {
     case statDEG:
-      stack[X] = atan(stack[X])*360/(2*PI);          // Degrees to radians
+      stack[X] = atan(stack[X])*360/(2*PI);       // Radians to Degrees
       break;
     case statGRD:
-      stack[X] = atan(stack[X])*400/(2*PI);          // Gradians to radians
+      stack[X] = atan(stack[X])*400/(2*PI);       // Radians to Gradians
       break;
     case statRAD:
       stack[X] = atan(stack[X]);
