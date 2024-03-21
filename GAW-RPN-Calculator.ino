@@ -132,12 +132,6 @@ void setup() {
   FIX(9);
   showStack();
 
-  push(E);
-  showStack();
-
-  push(PI);
-  showStack();
-
   push(TEST1);
   showStack();
 
