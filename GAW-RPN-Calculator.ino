@@ -73,20 +73,34 @@ LiquidCrystal_I2C display(0x25,20,4);   // Instantiate display object
 
 
 /* ------------------------------------------------------------------------- *
- *                                                     Goniometric variables
+ *                                                      Calculator variables
  * ------------------------------------------------------------------------- */
-const unsigned int statDEG=0;
+int precision = 4;                      // default precision = 4
+
+const unsigned int statDEG=0;           // goniometric state
 const unsigned int statRAD=1;
 const unsigned int statGRD=2;
 unsigned int gonioStatus = statDEG;     // default to degrees
 
-double E = 2.718281828459045;
+bool stateShift=0;                      // shift default to 0 (off)
+
+double E = 2.718281828459045;           // constant for the natural number
 
 /* ------------------------------------------------------------------------- *
- *                                               Variables for X, Y, Z and T
+ *                                             Stack variables X, Y, Z and T
  * ------------------------------------------------------------------------- */
 double stack[4] = {0, 0, 0, 0};
 int X=0, Y=1, Z=2, T=3;
+
+/* ------------------------------------------------------------------------- *
+ *                                                Storage register variables
+ * Registers in array (30 in total)
+ *   0-9,      0 -  9
+ *   .0-.9    10 - 19
+ *   A-E,     20 - 24
+ *   .A-.E,   25 - 29
+ * ------------------------------------------------------------------------- */
+double Reg[30];
 
 /* ------------------------------------------------------------------------- *
  *                                                   Define keypad variables
@@ -107,17 +121,11 @@ int X=0, Y=1, Z=2, T=3;
  * ------------------------------------------------------------------------- */
   Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
-
-/* ------------------------------------------------------------------------- *
- *                                                      Calculator variables
- * ------------------------------------------------------------------------- */
-int precision = 4;                                // default precision = 4
-
 /* ------------------------------------------------------------------------- *
  *                                                                    loop()
  * ------------------------------------------------------------------------- */
 void loop() {
-
+  delay(5000);
 }
 
 
@@ -144,6 +152,7 @@ void setup() {
   // Leave intro screen for 3 seconds
   //
   LCD_display(display, 2, 0, "Initializing " );
+
   for (int t=13; t<16; t++) {
     LCD_display(display, 2, t, "." );
     delay(1000);
@@ -157,12 +166,29 @@ void setup() {
   FIX(9);
   showStack();
 
+  clearReg();
+  push(1);
+  push(2);
+  showStack();
+
+  STO(0);
+  showStack();
+
+  push(3);
+  push(4);
+
+  RCL(0);
+  showStack();
+
+delay(5000);
+
+/*
   String test1 = "-123.456789";
   double TEST1 = test1.toDouble();
 
   push(TEST1);
   showStack();
-
+ */
 #endif
   // ------------ TEST AREA ------------
   // -----------------------------------
@@ -334,6 +360,21 @@ void ATAN() {                                     // Arc Tangent
 /* ------------------------------------------------------------------------- *
  *                                                      Calculator functions
  * ------------------------------------------------------------------------- */
+void clearReg() {                                 // Clear registters
+  for (int i=0; i<30; i++) {
+    Reg[i] = 0;
+  }
+}
+
+double RCL(int reg) {
+  rollUp();
+  stack[X] = Reg[reg];
+}
+
+double STO(int reg) {
+  Reg[reg] = stack[X];
+}
+
 void FIX(int val) { precision = val; }
 
 void DEG() { gonioStatus = statDEG; }             // Calc in Degrees
