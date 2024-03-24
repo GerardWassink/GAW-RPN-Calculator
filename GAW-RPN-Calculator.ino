@@ -289,7 +289,7 @@ void handleNoShift() {
     case 0x54: { MULTIPLY();    break; }
     case 0x55: { /*   3  */     break; }
     case 0x56: { SUBTRACT();    break; }
-    case 0x57: { /* SIGMA*/     break; }
+    case 0x57: { /* E +  */     break; }
     case 0x58: { ADD();         break; }
 
     default: { break; }
@@ -406,35 +406,6 @@ void handleShiftG() {
 
     default: { break; }
   }
-}
-
-
-/* ------------------------------------------------------------------------- *
- *                                                         Make shiftF state
- * ------------------------------------------------------------------------- */
-void makeShiftF() {
-  debugln("Making shift state F");
-  stateShift = shiftF;
-  LCD_display(display, 3, 4, F("f") );
-}
-
-
-/* ------------------------------------------------------------------------- *
- *                                                         Make shiftG state
- * ------------------------------------------------------------------------- */
-void makeShiftG() {
-  debugln("Making shift state G");
-  stateShift = shiftG;
-  LCD_display(display, 3, 4, F("g") );
-}
-
-
-/* ------------------------------------------------------------------------- *
- *                                                         Clear shift state
- * ------------------------------------------------------------------------- */
-void clearShiftState() {
-  stateShift = noShift;
-  LCD_display(display, 3, 4, F(" ") );
 }
 
 
@@ -715,6 +686,27 @@ void rollUp() {                                   // Roll stack up
   stack[Z] = stack[Y];
   stack[Y] = stack[X];
   stack[X] = f;
+}
+
+
+/* ------------------------------------------------------------------------- *
+ *                                                     Shift state functions
+ * ------------------------------------------------------------------------- */
+void makeShiftF() {
+  debugln("Making shift state F");
+  stateShift = shiftF;
+  LCD_display(display, 3, 4, F("f") );
+}
+
+void makeShiftG() {
+  debugln("Making shift state G");
+  stateShift = shiftG;
+  LCD_display(display, 3, 4, F("g") );
+}
+
+void clearShiftState() {
+  stateShift = noShift;
+  LCD_display(display, 3, 4, F(" ") );
 }
 
 
