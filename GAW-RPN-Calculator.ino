@@ -31,6 +31,15 @@
 
 
 /* ------------------------------------------------------------------------- *
+ *                                				Positioning of onscreen indicators
+ * ------------------------------------------------------------------------- */
+// item		    startpos	  endpos    values
+// ----------	--------    ------    --------------------------------
+// gonioState     0          2      rad, grd (spaces when Degree mode)
+// shiftState     4          4      f, g
+
+
+/* ------------------------------------------------------------------------- *
  *       Compiler directives to switch debugging on / off
  *       Do not enable debug when not needed, Serial takes space and time!
  * ------------------------------------------------------------------------- */
@@ -48,12 +57,15 @@
 
 
 /* ------------------------------------------------------------------------- *
- *       Definitions for the keyboard
+ *                                              Definitions for the keyboard
  * ------------------------------------------------------------------------- */
 #define ROWS 5                              // five rows for keyboard
 #define COLS 8                              // eight columns for keyboard
 
 
+/* ------------------------------------------------------------------------- *
+ *                                                          Library includes
+ * ------------------------------------------------------------------------- */
 #include <Wire.h>                       // I2C comms library
 #include <LiquidCrystal_I2C.h>          // LCD library
 
