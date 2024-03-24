@@ -446,6 +446,20 @@ void doEnter() {
 }
 
 
+/* ***************************************************************************
+ * ***************************************************************************
+ * *****
+ * *****   Below are the various functions per domain:
+ * *****   - Logaritmic
+ * *****   - Algebraic
+ * *****   - Goniometric
+ * *****   - Statistic
+ * *****   - Calculator general
+ * *****
+ * ***************************************************************************
+ * ***************************************************************************/
+
+
 /* ------------------------------------------------------------------------- *
  *                                                     Logarithmic functions
  * ------------------------------------------------------------------------- */
@@ -628,16 +642,20 @@ void ATAN() {                                     // Arc Tangent
 
 
 /* ------------------------------------------------------------------------- *
- *                                                      Calculator functions
+ *                                                       Statistic functions
  * ------------------------------------------------------------------------- */
-void clearReg() {                                 // Clear registters
-  for (int i=0; i<30; i++) {
+void clearStats() {                            // Clear statistic registters
+  for (int i=statRegLo; i<=statRegHi; i++) {
     Reg[i] = 0;
   }
 }
 
-void clearStats() {                            // Clear statistic registters
-  for (int i=statRegLo; i<=statRegHi; i++) {
+
+/* ------------------------------------------------------------------------- *
+ *                                                      Calculator functions
+ * ------------------------------------------------------------------------- */
+void clearReg() {                                 // Clear registters
+  for (int i=0; i<30; i++) {
     Reg[i] = 0;
   }
 }
@@ -657,9 +675,20 @@ void CLX() {                                      // Recall X from register
 
 void FIX(int val) { precision = val; }
 
-void DEG() { gonioStatus = statDEG; }             // Calc in Degrees
-void RAD() { gonioStatus = statRAD; }             // Calc in Radians
-void GRD() { gonioStatus = statGRD; }             // Calc in Gradians
+void DEG() {                                      // Status to Degrees
+  gonioStatus = statDEG; 
+  LCD_display(display, 3, 0, F("   ") );
+}
+
+void RAD() {                                      // Status to Radians
+  gonioStatus = statRAD; 
+  LCD_display(display, 3, 0, F("rad") );
+}
+
+void GRD() {                                      // Status to Gradians
+  gonioStatus = statGRD; 
+  LCD_display(display, 3, 0, F("grd") );
+}
 
 void swapXY() {                                   // Swap X and Y
   double f = stack[X];
@@ -689,6 +718,15 @@ void rollUp() {                                   // Roll stack up
 }
 
 
+/* ***************************************************************************
+ * ***************************************************************************
+ * *****
+ * *****   Below are the display functions:
+ * *****
+ * ***************************************************************************
+ * ***************************************************************************/
+
+
 /* ------------------------------------------------------------------------- *
  *                                                               showStack()
  * ------------------------------------------------------------------------- */
@@ -702,20 +740,6 @@ void showStack() {
   myString.concat(String(stack[X], precision));
   myString.concat(F("                    "));
   LCD_display(display, 2, 0, myString.substring(0,20) );
-
-  switch (gonioStatus) {
-    case statDEG:
-      LCD_display(display, 3, 0, F("   ") );
-      break;
-    case statGRD:
-      LCD_display(display, 3, 0, F("grd") );
-      break;
-    case statRAD:
-      LCD_display(display, 3, 0, F("rad") );
-      break;
-    default:
-      break;
-  }
 }
 
 

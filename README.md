@@ -18,6 +18,7 @@
 - CHS()           // Change Sign
 - ABS()           // Absolute value
 - POW()           // Y to the power of X
+- INT()           // Make X = INT(X)
 - ADD()           // Add X to Y
 - SUBTRACT()      // Subtract Y from X
 - MULTIPLY()      // Multiply Y by X
@@ -27,7 +28,11 @@
 
 ### Goniometric
 
-- doPI()          // Generate PI number
+- toRAD()         // degrees to radians
+- toDEG()         // radians to degrees
+- DEG()           // switch mode to Degrees
+- RAD()           // switch mode to Radians
+- GRD()           // switch mode to Gradians
 - SIN()           // Sine of X
 - COS()           // Cosine of X
 - TAN()           // Tangent of X
@@ -35,18 +40,19 @@
 - ACOS()          // Arccosine of X
 - ATAN()          // Arctangent of X
 
+### Statistics
+
+- clearStats()    // Clear statistic registers
+
 ### Calculator
 
 - clearReg()      // Clear all 30 registers
-- clearStats()    // Clear statistic registers
+- STO()           // Store value in register
+- RCL()           // Recall value from register
 - CLX()           // Clear X register
-- INT()           // Make X = INT(X)
-- FIX(int)        // set precision
-- DEG()           // switch mode to Degrees
-- RAD()           // switch mode to Radians
-- GRD()           // switch mode to Gradians
+- FIX()           // Set precision (default 4)
 - swapXY()        // Exchange values of X and Y
-- push(double)    // Push number on stack
+- push()          // Push number on stack
 - rollDown()      // Roll stack down
 - rollUp()        // Roll stack up
 
