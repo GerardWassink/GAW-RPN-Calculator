@@ -115,13 +115,15 @@ double Reg[30];
   //   1     2     3     4     5     6     7     8     <== columns
     {0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18}, // row 1, pin 2
     {0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28}, // row 2, pin 3
-    {0x31, 0x32, 0x33, 0x34, 0x35, 0xFF, 0x37, 0x38}, // row 3, pin 4
+    {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38}, // row 3, pin 4
     {0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48}, // row 4, pin 5
     {0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58}, // row 5, pin 6
   };
   byte rowPins[ROWS] = {2,3,4,5,6};               // row pins of the keypad
   byte colPins[COLS] = {7,8,9,10,11,12,13,17};    // column pins of the keypad
   
+  char key = 0x00;                                // global keypres
+
 /* ------------------------------------------------------------------------- *
  *       Create object for Keypad
  * ------------------------------------------------------------------------- */
@@ -146,7 +148,7 @@ void setup() {
   myString.concat("          ");
   LCD_display(display, 0, 13, myString.substring(0,20) );
 
-#if DEBUG == 0
+  #if DEBUG == 0
   //
   // Leave intro screen for 3 seconds
   //
@@ -156,11 +158,11 @@ void setup() {
     LCD_display(display, 2, t, "." );
     delay(1000);
   }
-#endif
+  #endif
 
   // -----------------------------------
   // ------------ TEST AREA ------------
-#if DEBUG == 1
+  #if DEBUG == 1
 
   FIX(9);
   showStack();
@@ -170,12 +172,12 @@ void setup() {
   push(2);
   showStack();
 
-delay(1000);
+  delay(1000);
 
   STO(0);
   showStack();
 
-delay(1000);
+  delay(1000);
 
   push(3);
   push(4);
@@ -184,14 +186,7 @@ delay(1000);
   RCL(0);
   showStack();
 
-/*
-  String test1 = "-123.456789";
-  double TEST1 = test1.toDouble();
-
-  push(TEST1);
-  showStack();
- */
-#endif
+  #endif
   // ------------ TEST AREA ------------
   // -----------------------------------
 
@@ -206,126 +201,231 @@ void loop() {
    * Read key from keypad
    */
   String showchar="";
-  char key = keypad.getKey();               // get key press
+  key = keypad.getKey();               // get key press
   
-//  if (key != NO_KEY){                       // did we receive one?
   if (key) {  
     showchar = String(key, HEX);
     debugln(showchar + " - key pressed");
     switch (stateShift) {
-      case noShift: {
-        switch (key) {
 
-          case 0x11: { SQRT();        break; }
-          case 0x12: { EtoX();        break; }
-          case 0x13: { TENtoX();      break; }
-          case 0x14: { POW();         break; }
-          case 0x15: { OneOverX();    break; }
-          case 0x16: { CHS();         break; }
-          case 0x17: { /*   7  */     break; }
-          case 0x18: { /*   8  */     break; }
+      case noShift: { handleNoShift(); break; }
 
-          case 0x21: { /* SST  */     break; }
-          case 0x22: { /* GTO  */     break; }
-          case 0x23: { SIN();         break; }
-          case 0x24: { COS();         break; }
-          case 0x25: { TAN();         break; }
-          case 0x26: { /* EEX  */     break; }
-          case 0x27: { /*   4  */     break; }
-          case 0x28: { /*   5  */     break; }
+      case shiftF:  { handleShiftF();  break; }
 
-          case 0x31: { /* R/S   */    break; }
-          case 0x32: { /* GSB   */    break; }
-          case 0x33: { rollDown();    break; }
-          case 0x34: { swapXY();      break; }
-          case 0x35: { /* BSP   */    break; }
-          case 0x36: { /* ENTER */    break; }
-          case 0x37: { /*   1   */    break; }
-          case 0x38: { /*   2   */    break; }
+      case shiftG:  { handleShiftG();  break; }
 
-          case 0x41: { /* ON   */     break; }
-          case 0x42: { /* f    */     break; }
-          case 0x43: { /* g    */     break; }
-          case 0x44: { /* STO  */     break; }
-          case 0x45: { /* RCL  */     break; }
-          case 0x46: { /* ENTER*/     break; }
-          case 0x47: { /*   0  */     break; }
-          case 0x48: { /*   .  */     break; }
-
-          case 0x51: { /*   9  */     break; }
-          case 0x52: { DIVIDE();      break; }
-          case 0x53: { /*   6  */     break; }
-          case 0x54: { MULTIPLY();    break; }
-          case 0x55: { /*   3  */     break; }
-          case 0x56: { SUBTRACT();    break; }
-          case 0x57: { /* SIGMA*/     break; }
-          case 0x58: { ADD();         break; }
-
-          default: { break; }
-        }
-      }
-
-      case shiftF: {
-        switch (key) {
-
-          case 0x11: { /*   A  */     break; }
-          case 0x12: { /*   B  */     break; }
-          case 0x13: { /*   C  */     break; }
-          case 0x14: { /*   D  */     break; }
-          case 0x15: { /*   E  */     break; }
-          case 0x16: { /*MATRIX*/     break; }
-          case 0x17: { /* FIX  */     break; }
-          case 0x18: { /* SCI  */     break; }
-
-          case 0x21: { /* LBL  */     break; }
-          case 0x22: { /* HYP  */     break; }
-          case 0x23: { /* DIM  */     break; }
-          case 0x24: { /* (i)  */     break; }
-          case 0x25: { /* I    */     break; }
-          case 0x26: { /*RESULT*/     break; }
-          case 0x27: { /* X><  */     break; }
-          case 0x28: { /* DSE  */     break; }
-
-          case 0x31: { /* PSE   */    break; }
-          case 0x32: { /* CL E  */    break; }
-          case 0x33: { /* CL PGM*/    break; }
-          case 0x34: { /* CL REG*/    break; }
-          case 0x35: { /* CL PFX*/    break; }
-          case 0x36: { /* RAN#  */    break; }
-          case 0x37: { /* => R  */    break; }
-          case 0x38: { /* =>HMS */    break; }
-
-          case 0x41: { /* ON   */     break; }
-          case 0x42: { /* f    */     break; }
-          case 0x43: { /* g    */     break; }
-          case 0x44: { /* FRAC */     break; }
-          case 0x45: { /* USER */     break; }
-          case 0x46: { /* ENTER*/     break; }
-          case 0x47: { /* X!   */     break; }
-          case 0x48: { /* Y,r  */     break; }
-
-          case 0x51: { /* ENG  */     break; }
-          case 0x52: { /* SOLVE*/     break; }
-          case 0x53: { /* ISG  */     break; }
-          case 0x54: { /* f XY */     break; }
-          case 0x55: { /* =>RAD*/     break; }
-          case 0x56: { /* Re Im*/     break; }
-          case 0x57: { /* L.R. */     break; }
-          case 0x58: { /* P x,y*/     break; }
-
-          default: { break; }
-        }
-      }
-      case shiftG: {
-        switch (key) {
-          default: { break; }
-        }
-      }
       default: { break; }
     }
-    stateShift = noShift;
+
     showStack();
+
   }
+
+}
+
+
+/* ------------------------------------------------------------------------- *
+ *                                              Handle keys in noShift state
+ * ------------------------------------------------------------------------- */
+void handleNoShift() {
+  switch (key) {
+    case 0x11: { SQRT();        break; }
+    case 0x12: { EtoX();        break; }
+    case 0x13: { TENtoX();      break; }
+    case 0x14: { POW();         break; }
+    case 0x15: { OneOverX();    break; }
+    case 0x16: { CHS();         break; }
+    case 0x17: { /*   7  */     break; }
+    case 0x18: { /*   8  */     break; }
+
+    case 0x21: { /* SST  */     break; }
+    case 0x22: { /* GTO  */     break; }
+    case 0x23: { SIN();         break; }
+    case 0x24: { COS();         break; }
+    case 0x25: { TAN();         break; }
+    case 0x26: { /* EEX  */     break; }
+    case 0x27: { /*   4  */     break; }
+    case 0x28: { /*   5  */     break; }
+
+    case 0x31: { /* R/S   */    break; }
+    case 0x32: { /* GSB   */    break; }
+    case 0x33: { rollDown();    break; }
+    case 0x34: { swapXY();      break; }
+    case 0x35: { /* BSP   */    break; }
+    case 0x36: { doEnter();     break; }
+    case 0x37: { /*   1   */    break; }
+    case 0x38: { /*   2   */    break; }
+
+    case 0x41: { /* ON   */     break; }
+    case 0x42: { makeShiftF();  break; }
+    case 0x43: { makeShiftG();  break; }
+    case 0x44: { /* STO  */     break; }
+    case 0x45: { /* RCL  */     break; }
+    case 0x46: { /* ENTER*/     break; }
+    case 0x47: { /*   0  */     break; }
+    case 0x48: { /*   .  */     break; }
+
+    case 0x51: { /*   9  */     break; }
+    case 0x52: { DIVIDE();      break; }
+    case 0x53: { /*   6  */     break; }
+    case 0x54: { MULTIPLY();    break; }
+    case 0x55: { /*   3  */     break; }
+    case 0x56: { SUBTRACT();    break; }
+    case 0x57: { /* SIGMA*/     break; }
+    case 0x58: { ADD();         break; }
+
+    default: { break; }
+  }
+}
+
+
+/* ------------------------------------------------------------------------- *
+ *                                              Handle keys in shiftF state
+ * ------------------------------------------------------------------------- */
+void handleShiftF() {
+  switch (key) {
+
+    case 0x11: { /*   A   */    break; }
+    case 0x12: { /*   B   */    break; }
+    case 0x13: { /*   C   */    break; }
+    case 0x14: { /*   D   */    break; }
+    case 0x15: { /*   E   */    break; }
+    case 0x16: { /*MATRIX */    break; }
+    case 0x17: { /* FIX   */    break; }
+    case 0x18: { /* SCI   */    break; }
+
+    case 0x21: { /* LBL   */    break; }
+    case 0x22: { /* HYP   */    break; }
+    case 0x23: { /* DIM   */    break; }
+    case 0x24: { /* (i)   */    break; }
+    case 0x25: { /* I     */    break; }
+    case 0x26: { /*RESULT */    break; }
+    case 0x27: { /* X><   */    break; }
+    case 0x28: { /* DSE   */    break; }
+
+    case 0x31: { /* PSE   */    break; }
+    case 0x32: { /* CL E  */    break; }
+    case 0x33: { /* CL PGM*/    break; }
+    case 0x34: { /* CL REG*/    break; }
+    case 0x35: { /* CL PFX*/    break; }
+    case 0x36: { doRandom();    clearShiftState(); break; }
+    case 0x37: { /* => R  */    break; }
+    case 0x38: { /* =>HMS */    break; }
+
+    case 0x41: { /* ON    */    break; }
+    case 0x42: { /* f     */    break; }
+    case 0x43: { /* g     */    break; }
+    case 0x44: { /* FRAC  */    break; }
+    case 0x45: { /* USER  */    break; }
+    case 0x46: { doRandom();    clearShiftState(); break; }
+    case 0x47: { /* X!    */    break; }
+    case 0x48: { /* Y,r   */    break; }
+
+    case 0x51: { /* ENG  */     break; }
+    case 0x52: { /* SOLVE*/     break; }
+    case 0x53: { /* ISG  */     break; }
+    case 0x54: { /* f XY */     break; }
+    case 0x55: { /* =>RAD*/     break; }
+    case 0x56: { /* Re Im*/     break; }
+    case 0x57: { /* L.R. */     break; }
+    case 0x58: { /* P x,y*/     break; }
+
+    default: { break; }
+  }
+}
+
+
+/* ------------------------------------------------------------------------- *
+ *                                              Handle keys in shiftF state
+ * ------------------------------------------------------------------------- */
+void handleShiftG() {
+  switch (key) {
+
+    case 0x11: { SQRT();        clearShiftState(); break; }
+    case 0x12: { LOG();         clearShiftState(); break; }
+    case 0x13: { LOG10();       clearShiftState(); break; }
+    case 0x14: { PERCENT();     clearShiftState(); break; }
+    case 0x15: { /*  ^%   */    break; }
+    case 0x16: { ABS();         clearShiftState(); break; }
+    case 0x17: { DEG();         clearShiftState(); break; }
+    case 0x18: { RAD();         clearShiftState(); break; }
+
+    case 0x21: { /* BST   */    break; }
+    case 0x22: { /* HYP-1 */    break; }
+    case 0x23: { /* SIN-1 */    break; }
+    case 0x24: { /* COS-1 */    break; }
+    case 0x25: { /* TAN-1 */    break; }
+    case 0x26: { doPI();        clearShiftState(); break; }
+    case 0x27: { /* SF    */    break; }
+    case 0x28: { /* CF    */    break; }
+
+    case 0x31: { /* P/R   */    break; }
+    case 0x32: { /* RTN   */    break; }
+    case 0x33: { rollUp();      clearShiftState(); break; }
+    case 0x34: { /* RND   */    break; }
+    case 0x35: { CLX();         clearShiftState(); break; }
+    case 0x36: { /* LSTX  */    break; }
+    case 0x37: { /* => P  */    break; }
+    case 0x38: { /* => H  */    break; }
+
+    case 0x41: { /* ON    */    break; }
+    case 0x42: { /* f     */    break; }
+    case 0x43: { /* g     */    break; }
+    case 0x44: { doInt();       clearShiftState(); break; }
+    case 0x45: { /* MEM   */    break; }
+    case 0x46: { /* LSTX  */    break; }
+    case 0x47: { /* X     */    break; }
+    case 0x48: { /* S     */    break; }
+
+    case 0x51: { GRD();         clearShiftState(); break; }
+    case 0x52: { /* X<=Y  */    break; }
+    case 0x53: { /* F?    */    break; }
+    case 0x54: { /* x = 0 */    break; }
+    case 0x55: { /* =>DEG */    break; }
+    case 0x56: { /* TEST  */    break; }
+    case 0x57: { /* E -   */    break; }
+    case 0x58: { /* C x,y */    break; }
+
+    default: { break; }
+  }
+}
+
+
+/* ------------------------------------------------------------------------- *
+ *                                                         Make shiftF state
+ * ------------------------------------------------------------------------- */
+void makeShiftF() {
+  debugln("Making shift state F");
+  stateShift = shiftF;
+  LCD_display(display, 3, 4, F("f") );
+}
+
+
+/* ------------------------------------------------------------------------- *
+ *                                                         Make shiftG state
+ * ------------------------------------------------------------------------- */
+void makeShiftG() {
+  debugln("Making shift state G");
+  stateShift = shiftG;
+  LCD_display(display, 3, 4, F("g") );
+}
+
+
+/* ------------------------------------------------------------------------- *
+ *                                                         Clear shift state
+ * ------------------------------------------------------------------------- */
+void clearShiftState() {
+   stateShift = noShift;
+  LCD_display(display, 3, 4, F(" ") );
+}
+
+
+/* ------------------------------------------------------------------------- *
+ *                                                         Clear shift state
+ * ------------------------------------------------------------------------- */
+void doEnter() {
+  stateShift = noShift;
+  LCD_display(display, 3, 4, F(" ") );
 }
 
 
@@ -341,6 +441,21 @@ void EtoX()   { stack[X] = pow(E, stack[X]); }    // e TO THE POWER OF x
 /* ------------------------------------------------------------------------- *
  *                                                      Algebraicic functions
  * ------------------------------------------------------------------------- */
+void doRandom() {                                 // Random Number
+  double i;
+  randomSeed(analogRead(A7));
+  i = (double)random(2147483647);
+  debug("Result from random(): ");
+  i = i/2147483647;
+  debugln(i);
+
+  push( i );
+}
+
+void doInt() {                                    // x = int(x)
+  stack[X] = int(stack[X]);
+}
+
 void SQRT() { stack[X] = sqrt(stack[X]); }        // Square root
 void SQ()   { stack[X] = sq(stack[X]); }          // Square
 
@@ -394,6 +509,10 @@ void DIVIDE()  {                                  // Divide
 /* ------------------------------------------------------------------------- *
  *                                                     Goniometric functions
  * ------------------------------------------------------------------------- */
+void doPI() {
+  push(PI);                                       // X = PI
+}
+
 void SIN() {                                      // Sine
   double angle;
   switch (gonioStatus) {
@@ -510,6 +629,10 @@ void RCL(int reg) {                               // Recall X from register
   stack[X] = Reg[reg];
 }
 
+void CLX() {                                      // Recall X from register
+  stack[X] = 0;
+}
+
 void FIX(int val) { precision = val; }
 
 void DEG() { gonioStatus = statDEG; }             // Calc in Degrees
@@ -560,13 +683,13 @@ void showStack() {
 
   switch (gonioStatus) {
     case statDEG:
-      LCD_display(display, 3, 4, F("    ") );
+      LCD_display(display, 3, 0, F("   ") );
       break;
     case statGRD:
-      LCD_display(display, 3, 4, F("grad") );
+      LCD_display(display, 3, 0, F("grd") );
       break;
     case statRAD:
-      LCD_display(display, 3, 4, F("rad ") );
+      LCD_display(display, 3, 0, F("rad") );
       break;
     default:
       break;
