@@ -1,5 +1,9 @@
 # GAW-RPN-Calculator
- HP like RPN calculator on Arduino
+ HP like RPN calculator on Arduino, based on the HP-15C. No programming capabilities yet, perhaps in a future expansion.
+
+ The project was built on an Arduino NANO ESP32, using a 20x4 I2C LCD display. 
+ It needs a key matrix of 4 rows by 8 columns.
+ 
 
 ## Functions
 
