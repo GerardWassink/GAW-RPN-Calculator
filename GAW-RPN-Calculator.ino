@@ -5,8 +5,9 @@
  * Purpose: Generate keyboard commands
  * Versions:
  *   0.1  : Initial code base
+ *   0.2  : Most functions built in
  *------------------------------------------------------------------------- */
-#define progVersion "0.1"                     // Program version definition
+#define progVersion "0.2"                     // Program version definition
 /* ------------------------------------------------------------------------- *
  *             GNU LICENSE CONDITIONS
  * ------------------------------------------------------------------------- *
@@ -89,6 +90,9 @@ unsigned int stateShift=noShift;        // shift default to 0 (off)
 
 double E = 2.718281828459045;           // constant for the natural number
 
+int statRegLo = 2;                      // Lo register for statistics
+int statRegHi = 7;                      // Hi register for statistics
+
 /* ------------------------------------------------------------------------- *
  *                                             Stack variables X, Y, Z and T
  * ------------------------------------------------------------------------- */
@@ -148,6 +152,11 @@ void setup() {
   myString.concat("          ");
   LCD_display(display, 0, 13, myString.substring(0,20) );
 
+  //
+  // Clear all registers
+  //
+  clearReg();
+
   #if DEBUG == 0
   //
   // Leave intro screen for 3 seconds
@@ -167,23 +176,20 @@ void setup() {
   FIX(9);
   showStack();
 
-  clearReg();
-  push(1);
-  push(2);
+  push(45);
   showStack();
+  delay(3000);
 
-  delay(1000);
-
-  STO(0);
+  toRAD();
   showStack();
+  delay(3000);
 
-  delay(1000);
-
-  push(3);
-  push(4);
+  toDEG();
   showStack();
+  delay(3000);
 
-  RCL(0);
+  SIN();
+
   showStack();
 
   #endif
@@ -304,7 +310,7 @@ void handleShiftF() {
     case 0x28: { /* DSE   */    break; }
 
     case 0x31: { /* PSE   */    break; }
-    case 0x32: { /* CL E  */    break; }
+    case 0x32: { clearStats();  clearShiftState(); break; }
     case 0x33: { /* CL PGM*/    break; }
     case 0x34: { /* CL REG*/    break; }
     case 0x35: { /* CL PFX*/    break; }
@@ -325,7 +331,7 @@ void handleShiftF() {
     case 0x52: { /* SOLVE*/     break; }
     case 0x53: { /* ISG  */     break; }
     case 0x54: { /* f XY */     break; }
-    case 0x55: { /* =>RAD*/     break; }
+    case 0x55: { toRAD();       clearShiftState();  break; }
     case 0x56: { /* Re Im*/     break; }
     case 0x57: { /* L.R. */     break; }
     case 0x58: { /* P x,y*/     break; }
@@ -355,7 +361,7 @@ void handleShiftG() {
     case 0x23: { /* SIN-1 */    break; }
     case 0x24: { /* COS-1 */    break; }
     case 0x25: { /* TAN-1 */    break; }
-    case 0x26: { doPI();        clearShiftState(); break; }
+    case 0x26: { push(PI);      clearShiftState(); break; }
     case 0x27: { /* SF    */    break; }
     case 0x28: { /* CF    */    break; }
 
@@ -381,7 +387,7 @@ void handleShiftG() {
     case 0x52: { /* X<=Y  */    break; }
     case 0x53: { /* F?    */    break; }
     case 0x54: { /* x = 0 */    break; }
-    case 0x55: { /* =>DEG */    break; }
+    case 0x55: { toDEG();       clearShiftState();  break; }
     case 0x56: { /* TEST  */    break; }
     case 0x57: { /* E -   */    break; }
     case 0x58: { /* C x,y */    break; }
@@ -415,17 +421,16 @@ void makeShiftG() {
  *                                                         Clear shift state
  * ------------------------------------------------------------------------- */
 void clearShiftState() {
-   stateShift = noShift;
+  stateShift = noShift;
   LCD_display(display, 3, 4, F(" ") );
 }
 
 
 /* ------------------------------------------------------------------------- *
- *                                                         Clear shift state
+ *                                                          Handle Enter key
  * ------------------------------------------------------------------------- */
 void doEnter() {
-  stateShift = noShift;
-  LCD_display(display, 3, 4, F(" ") );
+  /* to be coded */
 }
 
 
@@ -442,13 +447,9 @@ void EtoX()   { stack[X] = pow(E, stack[X]); }    // e TO THE POWER OF x
  *                                                      Algebraicic functions
  * ------------------------------------------------------------------------- */
 void doRandom() {                                 // Random Number
-  double i;
+//  double i;
   randomSeed(analogRead(A7));
-  i = (double)random(2147483647);
-  debug("Result from random(): ");
-  i = i/2147483647;
-  debugln(i);
-
+  double i = (double)random(2147483647) / 2147483647;
   push( i );
 }
 
@@ -509,12 +510,15 @@ void DIVIDE()  {                                  // Divide
 /* ------------------------------------------------------------------------- *
  *                                                     Goniometric functions
  * ------------------------------------------------------------------------- */
-void doPI() {
-  push(PI);                                       // X = PI
+void toRAD() {                                    // convert degrees to Radians
+  stack[X] = stack[X]*2*PI/360;
+}
+
+void toDEG() {                                    // convert Radians to degrees
+  stack[X] = stack[X]*360/(2*PI);
 }
 
 void SIN() {                                      // Sine
-  double angle;
   switch (gonioStatus) {
     case statDEG:
       stack[X] = sin(stack[X]*2*PI/360);          // Degrees to radians
@@ -616,6 +620,12 @@ void ATAN() {                                     // Arc Tangent
  * ------------------------------------------------------------------------- */
 void clearReg() {                                 // Clear registters
   for (int i=0; i<30; i++) {
+    Reg[i] = 0;
+  }
+}
+
+void clearStats() {                            // Clear statistic registters
+  for (int i=statRegLo; i<=statRegHi; i++) {
     Reg[i] = 0;
   }
 }
