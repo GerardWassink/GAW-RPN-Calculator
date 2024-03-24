@@ -188,22 +188,63 @@ void setup() {
   FIX(9);
   showStack();
 
-  push(45);
+  clearStats();
+
+  push(40);
+  push(50);
+  sigmaPlus();
   showStack();
-  delay(3000);
+  debugln();
+  debugln("statistic registers:"); 
+  debug("reg 2: "); debugln(Reg[2]);
+  debug("reg 3: "); debugln(Reg[3]);
+  debug("reg 4: "); debugln(Reg[4]);
+  debug("reg 5: "); debugln(Reg[5]);
+  debug("reg 6: "); debugln(Reg[6]);
+  debug("reg 7: "); debugln(Reg[7]);
 
-  toRAD();
+  push(50);
+  push(60);
+  sigmaPlus();
   showStack();
-  delay(3000);
-
-  toDEG();
+  debugln();
+  debugln("statistic registers:"); 
+  debug("reg 2: "); debugln(Reg[2]);
+  debug("reg 3: "); debugln(Reg[3]);
+  debug("reg 4: "); debugln(Reg[4]);
+  debug("reg 5: "); debugln(Reg[5]);
+  debug("reg 6: "); debugln(Reg[6]);
+  debug("reg 7: "); debugln(Reg[7]);
+  
+  push(60);
+  push(70);
+  sigmaPlus();
   showStack();
-  delay(3000);
-
-  SIN();
-
+  debugln();
+  debugln("statistic registers:"); 
+  debug("reg 2: "); debugln(Reg[2]);
+  debug("reg 3: "); debugln(Reg[3]);
+  debug("reg 4: "); debugln(Reg[4]);
+  debug("reg 5: "); debugln(Reg[5]);
+  debug("reg 6: "); debugln(Reg[6]);
+  debug("reg 7: "); debugln(Reg[7]);
+  
+  push(70);
+  push(80);
+  sigmaPlus();
   showStack();
+  debugln();
+  debugln("statistic registers:"); 
+  debug("reg 2: "); debugln(Reg[2]);
+  debug("reg 3: "); debugln(Reg[3]);
+  debug("reg 4: "); debugln(Reg[4]);
+  debug("reg 5: "); debugln(Reg[5]);
+  debug("reg 6: "); debugln(Reg[6]);
+  debug("reg 7: "); debugln(Reg[7]);
 
+  meanValues();
+  showStack();
+  
   #endif
   // ------------ TEST AREA ------------
   // -----------------------------------
@@ -392,7 +433,7 @@ void handleShiftG() {
     case 0x44: { doInt();       clearShiftState(); break; }
     case 0x45: { /* MEM   */    break; }
     case 0x46: { /* LSTX  */    break; }
-    case 0x47: { /* X     */    break; }
+    case 0x47: { meanValues();   break; }
     case 0x48: { /* S     */    break; }
 
     case 0x51: { GRD();         clearShiftState(); break; }
@@ -619,6 +660,25 @@ void clearStats() {                            // Clear statistic registters
   for (int i=statRegLo; i<=statRegHi; i++) {
     Reg[i] = 0;
   }
+}
+
+void sigmaPlus() {
+  double x = stack[X];
+  double y = stack[Y];
+
+  Reg[statRegLo]   = Reg[statRegLo]   + 1;        // Number of data points
+  Reg[statRegLo+1] = Reg[statRegLo+1] + x;        // Summation of X values
+  Reg[statRegLo+2] = Reg[statRegLo+2] + (x*x);    // Summation of X squares
+  Reg[statRegLo+3] = Reg[statRegLo+3] + y;        // Summation of Y values
+  Reg[statRegLo+4] = Reg[statRegLo+4] + (y*y);    // Summation of Y squares
+  Reg[statRegLo+5] = Reg[statRegLo+5] + (x*y);    // Summation of x*yY products
+
+  stack[X] = (double)Reg[statRegLo];
+}
+
+void meanValues() {
+  push( Reg[statRegLo+3] / Reg[statRegLo] );
+  push( Reg[statRegLo+1] / Reg[statRegLo] );
 }
 
 
