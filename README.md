@@ -2,6 +2,7 @@
  HP like RPN calculator on Arduino, loosely based on the HP-15C. 
  No programming capabilities yet, perhaps in a future expansion.
 
+![Alt text](https://./gfx/GAW-RPN-Calculator-pic01.jpg "On the test bench")
 
 ## Hardware
  The project was built on an Arduino NANO ESP32, using a 20x4 I2C LCD display. 
@@ -20,7 +21,7 @@
  The ones that are coded already are actually being called.
  Those that are not coded yet have comments with their name / function.
 
-### (un)shifted?
+### To shift or not to shift...
  As you might know, HP calculators work with shift keys. The 15-C has two of them.
  They are called 'f' and 'g'. The keyhandling therefor consists of three routines.
  These routines are called:
@@ -29,7 +30,8 @@
  - handleShiftG()
 
 
-## Functions so far
+## Functions
+ The functions that have been coded and bound to their keys are listed here.
 
 ### Logaritmic
 
