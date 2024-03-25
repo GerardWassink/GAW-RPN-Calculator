@@ -155,11 +155,6 @@ void setup() {
   display.init();                       // Initialize display
   display.backlight();                  // Backlights on by default
   
-  //
-  // Clear all registers
-  //
-  clearRegs();
-
   //                                                            Intro Screen
   // Assemble and show intro text and versionb
   //
@@ -176,100 +171,19 @@ void setup() {
   display.init();                       // Re-initialize display
   display.backlight();                  // Backlights on by default
 
+  clearRegs();                          // Clear all registers
+  DEG();                                // Make mode degrees by default
+
   // -----------------------------------
   // ------------ TEST AREA ------------
-  #if DEBUG == 1
+#if DEBUG == 1
 
   FIX(9);
   showStack();
 
-  clearStats();
+  #include "statisticsTest.h"             // Include local file
 
-  push(40);
-  push(50);
-  sigmaPlus();
-  showStack();
-  debugln();
-  debugln("statistic registers:"); 
-  debug("reg 2: "); debugln(Reg[2]);
-  debug("reg 3: "); debugln(Reg[3]);
-  debug("reg 4: "); debugln(Reg[4]);
-  debug("reg 5: "); debugln(Reg[5]);
-  debug("reg 6: "); debugln(Reg[6]);
-  debug("reg 7: "); debugln(Reg[7]);
-
-  push(50);
-  push(60);
-  sigmaPlus();
-  showStack();
-  debugln();
-  debugln("statistic registers:"); 
-  debug("reg 2: "); debugln(Reg[2]);
-  debug("reg 3: "); debugln(Reg[3]);
-  debug("reg 4: "); debugln(Reg[4]);
-  debug("reg 5: "); debugln(Reg[5]);
-  debug("reg 6: "); debugln(Reg[6]);
-  debug("reg 7: "); debugln(Reg[7]);
-  
-  push(60);
-  push(70);
-  sigmaPlus();
-  showStack();
-  debugln();
-  debugln("statistic registers:"); 
-  debug("reg 2: "); debugln(Reg[2]);
-  debug("reg 3: "); debugln(Reg[3]);
-  debug("reg 4: "); debugln(Reg[4]);
-  debug("reg 5: "); debugln(Reg[5]);
-  debug("reg 6: "); debugln(Reg[6]);
-  debug("reg 7: "); debugln(Reg[7]);
-delay(5000);
-  
-  push(75);
-  push(85);
-  sigmaPlus();
-  showStack();
-  debugln();
-  debugln("statistic registers:"); 
-  debug("reg 2: "); debugln(Reg[2]);
-  debug("reg 3: "); debugln(Reg[3]);
-  debug("reg 4: "); debugln(Reg[4]);
-  debug("reg 5: "); debugln(Reg[5]);
-  debug("reg 6: "); debugln(Reg[6]);
-  debug("reg 7: "); debugln(Reg[7]);
-delay(5000);
-
-  push(75);
-  push(85);
-  sigmaMinus();
-  showStack();
-  debugln();
-  debugln("statistic registers:"); 
-  debug("reg 2: "); debugln(Reg[2]);
-  debug("reg 3: "); debugln(Reg[3]);
-  debug("reg 4: "); debugln(Reg[4]);
-  debug("reg 5: "); debugln(Reg[5]);
-  debug("reg 6: "); debugln(Reg[6]);
-  debug("reg 7: "); debugln(Reg[7]);
-delay(5000);
-
-  push(70);
-  push(80);
-  sigmaPlus();
-  showStack();
-  debugln();
-  debugln("statistic registers:"); 
-  debug("reg 2: "); debugln(Reg[2]);
-  debug("reg 3: "); debugln(Reg[3]);
-  debug("reg 4: "); debugln(Reg[4]);
-  debug("reg 5: "); debugln(Reg[5]);
-  debug("reg 6: "); debugln(Reg[6]);
-  debug("reg 7: "); debugln(Reg[7]);
-
-  meanValues();
-  showStack();
-  
-  #endif
+#endif
   // ------------ TEST AREA ------------
   // -----------------------------------
 
@@ -746,7 +660,7 @@ void FIX(int val) { precision = val; }
 
 void DEG() {                                      // Status to Degrees
   gonioStatus = statDEG; 
-  LCD_display(display, 3, 0, F("   ") );
+  LCD_display(display, 3, 0, F("deg") );
 }
 
 void RAD() {                                      // Status to Radians
