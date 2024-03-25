@@ -156,30 +156,25 @@ void setup() {
   display.backlight();                  // Backlights on by default
   
   //
-  // Assemble and show intro text and versionb
-  //
-  LCD_display(display, 0, 0, "GAW RPN calc ");
-  String myString = "v";
-  myString.concat(progVersion);
-  myString.concat("          ");
-  LCD_display(display, 0, 13, myString.substring(0,20) );
-
-  //
   // Clear all registers
   //
-  clearReg();
+  clearRegs();
 
-  #if DEBUG == 0
+  //                                                            Intro Screen
+  // Assemble and show intro text and versionb
   //
-  // Leave intro screen for 3 seconds
-  //
-  LCD_display(display, 2, 0, "Initializing " );
+  LCD_display(display, 0, 0, "GAW RPN calculator  ");
+  String myString = "version ";
+  myString.concat(progVersion);
+  myString.concat("          ");
+  LCD_display(display, 1,  0, myString.substring(0,20) );
+  LCD_display(display, 2,  0, "by Gerard Wassink" );
+  LCD_display(display, 3,  0, "GNU license v3" );
 
-  for (int t=13; t<16; t++) {
-    LCD_display(display, 2, t, "." );
-    delay(1000);
-  }
-  #endif
+  delay(3000);
+
+  display.init();                       // Re-initialize display
+  display.backlight();                  // Backlights on by default
 
   // -----------------------------------
   // ------------ TEST AREA ------------
@@ -685,7 +680,7 @@ void meanValues() {
 /* ------------------------------------------------------------------------- *
  *                                                      Calculator functions
  * ------------------------------------------------------------------------- */
-void clearReg() {                                 // Clear registters
+void clearRegs() {                                 // Clear registters
   for (int i=0; i<30; i++) {
     Reg[i] = 0;
   }
@@ -783,7 +778,12 @@ void clearShiftState() {
  *                                                               showStack()
  * ------------------------------------------------------------------------- */
 void showStack() {
-  String myString = "Y: ";
+  String myString = "Z: ";
+  myString.concat(String(stack[Z], precision));
+  myString.concat(F("                    "));
+  LCD_display(display, 0, 0, myString.substring(0,20) );
+
+  myString = "Y: ";
   myString.concat(String(stack[Y], precision));
   myString.concat(F("                    "));
   LCD_display(display, 1, 0, myString.substring(0,20) );
