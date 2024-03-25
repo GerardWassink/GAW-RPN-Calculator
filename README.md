@@ -1,14 +1,35 @@
 # GAW-RPN-Calculator
- HP like RPN calculator on Arduino, based on the HP-15C. No programming capabilities yet, perhaps in a future expansion.
+ HP like RPN calculator on Arduino, loosely based on the HP-15C. 
+ No programming capabilities yet, perhaps in a future expansion.
 
+
+## Hardware
  The project was built on an Arduino NANO ESP32, using a 20x4 I2C LCD display. 
- It needs a keyboard of 4 rows by 10 columns. 
- 
- We use a matrix of 5 rows and 8 columns. 
+ It needs a keyboard of 4 rows by 10 columns. We use a matrix of 5 rows and 8 columns. 
  The fifth row handles the eigth buttons in the two columns on the far right, thus saving one pin.
- 
 
-## Functions
+
+## Software
+ In the setup routine there's a place called 'TEST AREA' in the comments surrounding it.
+ A few testscenarios have been packed in this repository.
+ The include statements for them are there in the code, albeit commented out.
+ Use them at you convenience.
+
+### handling of keys and functions
+ All functions have been named in the functions that handle keypresses. 
+ The ones that are coded already are actually being called.
+ Those that are not coded yet have comments with their name / function.
+
+### (un)shifted?
+ As you might know, HP calculators work with shift keys. The 15-C has two of them.
+ They are called 'f' and 'g'. The keyhandling therefor consists of three routines.
+ These routines are called:
+ - handleNoShift()
+ - handleShiftF()
+ - handleShiftG()
+
+
+## Functions so far
 
 ### Logaritmic
 
