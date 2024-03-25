@@ -186,7 +186,7 @@ void setup() {
 //  #include "testStatistics.h"
 //  #include "testGoniometrics.h"
 //  #include "testLogaritmic.h"
-  #include "testAlgebraics.h"
+//  #include "testAlgebraics.h"
 
 #endif
   // ------------ TEST AREA ------------
