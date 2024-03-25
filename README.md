@@ -2,6 +2,7 @@
  HP like RPN calculator on Arduino, loosely based on the HP-15C. 
  No programming capabilities yet, perhaps in a future expansion.
 
+Here it is, on my test bench:
 <img src="./gfx/GAW-RPN-Calculator-pic01.jpg" width="600">
 
 ## Hardware
