@@ -10,7 +10,7 @@
 
  Here is the prototype, on my test bench:
 
- <img src="./gfx/GAW-RPN-Calculator-pic01.jpg" width="600">
+ <img src="./gfx/GAW-RPN-Calculator-pic01.jpg" width="600" align="center">
 
 
 ## Software
