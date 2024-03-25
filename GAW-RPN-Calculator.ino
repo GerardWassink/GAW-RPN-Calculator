@@ -35,7 +35,7 @@
  * ------------------------------------------------------------------------- */
 // item		    startpos	  endpos    values
 // ----------	--------    ------    --------------------------------
-// gonioState     0          2      rad, grd (spaces when Degree mode)
+// gonioState    17         19      rad, grd (spaces when Degree mode)
 // shiftState     4          4      f, g
 
 
@@ -664,17 +664,17 @@ void FIX(int val) { precision = val; }
 
 void DEG() {                                      // Status to Degrees
   gonioStatus = statDEG; 
-  LCD_display(display, 3, 0, F("deg") );
+  LCD_display(display, 3,17, F("deg") );
 }
 
 void RAD() {                                      // Status to Radians
   gonioStatus = statRAD; 
-  LCD_display(display, 3, 0, F("rad") );
+  LCD_display(display, 3,17, F("rad") );
 }
 
 void GRD() {                                      // Status to Gradians
   gonioStatus = statGRD; 
-  LCD_display(display, 3, 0, F("grd") );
+  LCD_display(display, 3,17, F("grd") );
 }
 
 void swapXY() {                                   // Swap X and Y
