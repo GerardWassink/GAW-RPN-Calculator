@@ -47,6 +47,9 @@
 ### Statistics
 
 - clearStats()    // Clear statistic registers
+- sigmaPlus()     // Accumulate datapoints
+- sigmaMinus()    // Correct datapoints
+
 
 ### Calculator
 
