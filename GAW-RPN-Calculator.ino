@@ -187,9 +187,10 @@ void setup() {
 //  #include "testLogaritmic.h"
 //  #include "testAlgebraics.h"
 
-  push(PI);
+  push(171.);
   FAC();
   showStack();
+
 
 #endif
   // ------------ TEST AREA ------------
@@ -206,9 +207,10 @@ void loop() {
    * Read key from keypad
    */
   String showchar="";
-  key = keypad.getKey();               // get key press
+  key = keypad.getKey();                          // get key press
   
   if (key) {  
+    LCD_display(display, 3, 13, "   ");           // Clear ovf if we had one
     showchar = String(key, HEX);
     debugln(showchar + " - key pressed");
     switch (stateShift) {
@@ -323,7 +325,7 @@ void handleShiftF() {
     case 0x44: { /* FRAC  */    break; }
     case 0x45: { /* USER  */    break; }
     case 0x46: { doRandom();    clearShiftState(); break; }
-    case 0x47: { FAC();         break; }
+    case 0x47: { FAC();         clearShiftState(); break; }
     case 0x48: { /* Y,r   */    break; }
 
     case 0x51: { /* ENG  */     break; }
@@ -464,9 +466,15 @@ void PERCENT()  {                                 // Take X perecnt of Y
 
 void FAC()  {                                     // Factorial
   double x = int(stack[X]);
-  double r = 1;
-  for (int i=2; i<=x; i++) { r=r*i; }
-  stack[X] = r;
+  if (x <=170) {
+    double r = 1;
+    for (double i=2; i<=x; i++) {
+      r = r * i; 
+    }
+    stack[X] = r;
+  } else {
+    LCD_display(display, 3, 13, "ovf");
+  }
 }
 
 void ADD()  {                                     // Add
