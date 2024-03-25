@@ -181,7 +181,8 @@ void setup() {
   FIX(9);
   showStack();
 
-  #include "statisticsTest.h"             // Include local file
+//  #include "testStatistics.h"
+  #include "testGoniometrics.h"
 
 #endif
   // ------------ TEST AREA ------------
