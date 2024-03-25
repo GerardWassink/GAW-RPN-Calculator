@@ -5,24 +5,19 @@
 
 ## Hardware
  The project was built on an Arduino NANO ESP32, using a 20x4 I2C LCD display. 
- It needs a keyboard of 4 rows by 10 columns. We use a matrix of 5 rows and 8 columns. 
+ It needs a keyboard of 4 rows by 10 columns. For decoding we use a matrix of 5 rows and 8 columns. 
  The fifth row handles the eigth buttons in the two columns on the far right, thus saving one pin.
 
  Here is the prototype, on my test bench:
 
- <img src="./gfx/GAW-RPN-Calculator-pic01.jpg" width="600" align="center">
+ <img src="./gfx/GAW-RPN-Calculator-pic01.jpg" width="600">
 
 
 ## Software
  In the setup routine there's a place called 'TEST AREA' in the comments surrounding it.
- A few testscenarios have been packed in this repository.
+ A few testscenarios have been packed in this repository as include files.
  The include statements for them are there in the code, albeit commented out.
  Use them at you convenience.
-
-### handling of keys and functions
- All functions have been named in the functions that handle keypresses. 
- The ones that are coded already are actually being called.
- Those that are not coded yet have comments with their name / function.
 
 ### To shift or not to shift...
  As you might know, HP calculators work with shift keys. The 15-C has two of them.
@@ -32,9 +27,15 @@
  - handleShiftF()
  - handleShiftG()
 
+### Handling of keys and functions
+ All keys in the matrix are tested for.
+ All calculator functions have been named in the parts of the program that handle keypresses. 
+ The ones that are coded already are actually being called.
+ Those that are not coded yet have comments with their name / function.
+
 
 ## Functions
- The functions that have been coded and bound to their keys are listed here.
+ The functions that have been coded and bound to their respective keys are listed here.
 
 ### Logaritmic
 
