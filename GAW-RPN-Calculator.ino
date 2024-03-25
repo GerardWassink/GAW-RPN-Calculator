@@ -182,7 +182,8 @@ void setup() {
   showStack();
 
 //  #include "testStatistics.h"
-  #include "testGoniometrics.h"
+//  #include "testGoniometrics.h"
+  #include "testLogaritmic.h"
 
 #endif
   // ------------ TEST AREA ------------
