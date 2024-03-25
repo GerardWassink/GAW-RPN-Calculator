@@ -2,7 +2,7 @@
  HP like RPN calculator on Arduino, loosely based on the HP-15C. 
  No programming capabilities yet, perhaps in a future expansion.
 
-![Alt text](./gfx/GAW-RPN-Calculator-pic01.jpg =600 "On the test bench")
+![Alt text](./gfx/GAW-RPN-Calculator-pic01.jpg =600x "On the test bench")
 
 ## Hardware
  The project was built on an Arduino NANO ESP32, using a 20x4 I2C LCD display. 
