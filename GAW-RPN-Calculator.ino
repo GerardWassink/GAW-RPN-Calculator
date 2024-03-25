@@ -152,6 +152,7 @@ double Reg[30];
 void setup() {
   debugstart(115200);
 
+#if DEBUG == 0
   display.init();                       // Initialize display
   display.backlight();                  // Backlights on by default
   
@@ -167,6 +168,7 @@ void setup() {
   LCD_display(display, 3,  0, "GNU license v3" );
 
   delay(3000);
+#endif
 
   display.init();                       // Re-initialize display
   display.backlight();                  // Backlights on by default
@@ -183,7 +185,8 @@ void setup() {
 
 //  #include "testStatistics.h"
 //  #include "testGoniometrics.h"
-  #include "testLogaritmic.h"
+//  #include "testLogaritmic.h"
+  #include "testAlgebraics.h"
 
 #endif
   // ------------ TEST AREA ------------
