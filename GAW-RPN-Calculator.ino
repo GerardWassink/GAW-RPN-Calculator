@@ -7,7 +7,7 @@
  *   0.1  : Initial code base
  *   0.2  : Most functions built in
  *------------------------------------------------------------------------- */
-#define progVersion "0.2"                     // Program version definition
+#define progVersion "0.3"                     // Program version definition
 /* ------------------------------------------------------------------------- *
  *             GNU LICENSE CONDITIONS
  * ------------------------------------------------------------------------- *
@@ -35,8 +35,8 @@
  * ------------------------------------------------------------------------- */
 // item		    startpos	  endpos    values
 // ----------	--------    ------    --------------------------------
-// gonioState    17         19      rad, grd (spaces when Degree mode)
 // shiftState     4          4      f, g
+// gonioState    17         19      rad, grd (spaces when Degree mode)
 
 
 /* ------------------------------------------------------------------------- *
