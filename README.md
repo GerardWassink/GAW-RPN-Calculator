@@ -55,6 +55,7 @@
 - ABS()           // Absolute value
 - INT()           // Make X = INT(X)
 - RANDOM()        // Generate random number
+- FAC()           // Calculate factorial of X
 - ADD()           // Add X to Y
 - SUBTRACT()      // Subtract Y from X
 - MULTIPLY()      // Multiply Y by X

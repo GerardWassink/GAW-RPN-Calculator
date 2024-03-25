@@ -187,6 +187,10 @@ void setup() {
 //  #include "testLogaritmic.h"
 //  #include "testAlgebraics.h"
 
+  push(PI);
+  FAC();
+  showStack();
+
 #endif
   // ------------ TEST AREA ------------
   // -----------------------------------
@@ -319,7 +323,7 @@ void handleShiftF() {
     case 0x44: { /* FRAC  */    break; }
     case 0x45: { /* USER  */    break; }
     case 0x46: { doRandom();    clearShiftState(); break; }
-    case 0x47: { /* X!    */    break; }
+    case 0x47: { FAC();         break; }
     case 0x48: { /* Y,r   */    break; }
 
     case 0x51: { /* ENG  */     break; }
@@ -456,6 +460,13 @@ void PERCENT()  {                                 // Take X perecnt of Y
   stack[X] = stack[T];
   rollDown();
   stack[X] = temp;
+}
+
+void FAC()  {                                     // Factorial
+  double x = int(stack[X]);
+  double r = 1;
+  for (int i=2; i<=x; i++) { r=r*i; }
+  stack[X] = r;
 }
 
 void ADD()  {                                     // Add
