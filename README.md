@@ -3,6 +3,7 @@
  No programming capabilities yet, perhaps in a future expansion.
 
 Here it is, on my test bench:
+
 <img src="./gfx/GAW-RPN-Calculator-pic01.jpg" width="600">
 
 ## Hardware
