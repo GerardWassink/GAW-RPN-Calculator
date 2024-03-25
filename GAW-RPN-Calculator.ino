@@ -268,7 +268,7 @@ void handleNoShift() {
     case 0x54: { MULTIPLY();    break; }
     case 0x55: { /*   3  */     break; }
     case 0x56: { SUBTRACT();    break; }
-    case 0x57: { /* E +  */     break; }
+    case 0x57: { sigmaPlus();   break; }
     case 0x58: { ADD();         break; }
 
     default: { break; }
@@ -371,8 +371,8 @@ void handleShiftG() {
     case 0x44: { doInt();       clearShiftState(); break; }
     case 0x45: { /* MEM   */    break; }
     case 0x46: { /* LSTX  */    break; }
-    case 0x47: { meanValues();   break; }
-    case 0x48: { /* S     */    break; }
+    case 0x47: { meanValues();  break; }
+    case 0x48: { /* StdDev*/    break; }
 
     case 0x51: { GRD();         clearShiftState(); break; }
     case 0x52: { /* X<=Y  */    break; }
@@ -380,7 +380,7 @@ void handleShiftG() {
     case 0x54: { /* x = 0 */    break; }
     case 0x55: { toDEG();       clearShiftState();  break; }
     case 0x56: { /* TEST  */    break; }
-    case 0x57: { /* E -   */    break; }
+    case 0x57: { sigmaMinus();  break; }
     case 0x58: { /* C x,y */    break; }
 
     default: { break; }
