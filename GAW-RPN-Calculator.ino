@@ -88,7 +88,7 @@ LiquidCrystal_I2C display(0x25,20,4);   // Instantiate display object
 /* ------------------------------------------------------------------------- *
  *                                                      Calculator variables
  * ------------------------------------------------------------------------- */
-int precision = 4;                      // default precision = 4
+int precision = 9;                      // default precision = 9
 
 const unsigned int statDEG=0;           // goniometric state
 const unsigned int statRAD=1;
@@ -127,7 +127,7 @@ double Reg[30];
  *  Key values indicate row and column number
  * ------------------------------------------------------------------------- */
   char keys[ROWS][COLS] = {
-  //   7     8     9    10    11    12    13    14     <== pins
+  //   7     8     9    10    11    12    13    17     <== pins
   //   1     2     3     4     5     6     7     8     <== columns
     {0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18}, // row 1, pin 2
     {0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28}, // row 2, pin 3
@@ -175,13 +175,12 @@ void setup() {
 
   clearRegs();                          // Clear all registers
   DEG();                                // Make mode degrees by default
+  FIX(9);                               // preferred precision
+  showStack();                          // Show the stack
 
   // -----------------------------------
   // ------------ TEST AREA ------------
 #if DEBUG == 1
-
-  FIX(9);
-  showStack();
 
 //  #include "testStatistics.h"
 //  #include "testGoniometrics.h"
