@@ -6,6 +6,7 @@
  * Versions:
  *   0.1  : Initial code base
  *   0.2  : Most functions built in
+ *   0.3  : Minor improvements
  *------------------------------------------------------------------------- */
 #define progVersion "0.3"                     // Program version definition
 /* ------------------------------------------------------------------------- *
@@ -40,8 +41,9 @@
 
 
 /* ------------------------------------------------------------------------- *
- *       Compiler directives to switch debugging on / off
- *       Do not enable debug when not needed, Serial takes space and time!
+ *                                                        DEBUGGING ON / OFF
+ * Compiler directives to switch debugging on / off
+ * Do not enable debug when not needed, Serial takes space and time!
  * ------------------------------------------------------------------------- */
 #define DEBUG 1
 
@@ -122,8 +124,9 @@ int X=0, Y=1, Z=2, T=3;
 double Reg[30];
 
 /* ------------------------------------------------------------------------- *
- *                                                   Define keypad variables
+ *                                                       Define keypad codes
  *  Conforming to a HP-15C calculator
+ *  When a key is pressed it will generate the codes below
  *  Key values indicate row and column number
  * ------------------------------------------------------------------------- */
   char keys[ROWS][COLS] = {
@@ -138,12 +141,15 @@ double Reg[30];
   byte rowPins[ROWS] = {2,3,4,5,6};               // row pins of the keypad
   byte colPins[COLS] = {7,8,9,10,11,12,13,17};    // column pins of the keypad
   
-  char key = 0x00;                                // global keypres
-
 /* ------------------------------------------------------------------------- *
- *       Create object for Keypad
+ *                                                  Create object for Keypad
  * ------------------------------------------------------------------------- */
   Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS);
+
+/* ------------------------------------------------------------------------- *
+ *                                                           Global keypress
+ * ------------------------------------------------------------------------- */
+  char key = 0x00;
 
 
 /* ------------------------------------------------------------------------- *
@@ -187,11 +193,6 @@ void setup() {
 //  #include "testLogaritmic.h"
 //  #include "testAlgebraics.h"
 
-  push(171.);
-  FAC();
-  showStack();
-
-
 #endif
   // ------------ TEST AREA ------------
   // -----------------------------------
@@ -203,16 +204,20 @@ void setup() {
  * ------------------------------------------------------------------------- */
 void loop() {
 
-  /* 
-   * Read key from keypad
-   */
+#if DEBUG == 1
   String showchar="";
-  key = keypad.getKey();                          // get key press
+#endif
+
+  key = keypad.getKey();                          // Read key from keypad
   
   if (key) {  
     LCD_display(display, 3, 13, "   ");           // Clear ovf if we had one
-    showchar = String(key, HEX);
-    debugln(showchar + " - key pressed");
+
+    #if DEBUG == 1
+      showchar = String(key, HEX);
+      debugln(showchar + " - key pressed");
+    #endif
+
     switch (stateShift) {
 
       case noShift: { handleNoShift(); break; }
@@ -381,7 +386,7 @@ void handleShiftG() {
     case 0x44: { doInt();       clearShiftState(); break; }
     case 0x45: { /* MEM   */    break; }
     case 0x46: { /* LSTX  */    break; }
-    case 0x47: { meanValues();  break; }
+    case 0x47: { meanValues();  clearShiftState(); break; }
     case 0x48: { /* StdDev*/    break; }
 
     case 0x51: { GRD();         clearShiftState(); break; }
@@ -390,7 +395,7 @@ void handleShiftG() {
     case 0x54: { /* x = 0 */    break; }
     case 0x55: { toDEG();       clearShiftState();  break; }
     case 0x56: { /* TEST  */    break; }
-    case 0x57: { sigmaMinus();  break; }
+    case 0x57: { sigmaMinus();  clearShiftState();  break; }
     case 0x58: { /* C x,y */    break; }
 
     default: { break; }
@@ -433,10 +438,8 @@ void EtoX()   { stack[X] = pow(E, stack[X]); }    // e TO THE POWER OF x
  *                                                      Algebraicic functions
  * ------------------------------------------------------------------------- */
 void doRandom() {                                 // Random Number
-//  double i;
   randomSeed(analogRead(A7));
-  double i = (double)random(2147483647) / 2147483647;
-  push( i );
+  push( (double)random(2147483647) / 2147483647 );
 }
 
 void doInt() {                                    // x = int(x)
@@ -447,18 +450,34 @@ void SQRT() { stack[X] = sqrt(stack[X]); }        // Square root
 void SQ()   { stack[X] = sq(stack[X]); }          // Square
 
 void OneOverX()   { stack[X] = 1 / stack[X]; }    // 1 / X
-void CHS()   { stack[X] = -1 * stack[X]; }        // Change Sign
-void ABS()   { stack[X] = abs(stack[X]); }        // Absolute value
+void CHS() { stack[X] = -1 * stack[X]; }          // Change Sign
+void ABS() { stack[X] = abs(stack[X]); }          // Absolute value
 
-void POW()  {                                     // Y to the power of X
-  double temp = pow(stack[Y], stack[X]);
-  stack[X] = stack[T];
-  rollDown();
-  stack[X] = temp;
+void POW() {                                      // Y to the power of X
+  twoNums( pow(stack[Y], stack[X]));
 }
 
-void PERCENT()  {                                 // Take X perecnt of Y
-  double temp = stack[Y] * stack[X] / 100;
+void PERCENT() {                                  // Take X perecnt of Y
+  twoNums( stack[Y] * stack[X] / 100 );
+}
+
+void ADD()  {                                     // Add
+  twoNums( stack[Y] + stack[X] );
+}
+
+void SUBTRACT()  {                                // Subtract
+  twoNums( stack[Y] - stack[X] );
+}
+
+void MULTIPLY()  {                                // Multiply
+  twoNums( stack[Y] * stack[X] );
+}
+
+void DIVIDE()  {                                  // Divide
+  twoNums( stack[Y] / stack[X] );
+}
+
+void twoNums(double temp) {
   stack[X] = stack[T];
   rollDown();
   stack[X] = temp;
@@ -475,34 +494,6 @@ void FAC()  {                                     // Factorial
   } else {
     LCD_display(display, 3, 13, "ovf");
   }
-}
-
-void ADD()  {                                     // Add
-  double temp = stack[Y] + stack[X];
-  stack[X] = stack[T];
-  rollDown();
-  stack[X] = temp;
-}
-
-void SUBTRACT()  {                                // Subtract
-  double temp = stack[Y] - stack[X];
-  stack[X] = stack[T];
-  rollDown();
-  stack[X] = temp;
-}
-
-void MULTIPLY()  {                                // Multiply
-  double temp = stack[Y] * stack[X];
-  stack[X] = stack[T];
-  rollDown();
-  stack[X] = temp;
-}
-
-void DIVIDE()  {                                  // Divide
-  double temp = stack[Y] / stack[X];
-  stack[X] = stack[T];
-  rollDown();
-  stack[X] = temp;
 }
 
 
