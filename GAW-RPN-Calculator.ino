@@ -318,7 +318,7 @@ void handleNoShift() {
     case 0x43: { endNum(); makeShiftG();  break; }
     case 0x44: { /* STO  */     break; }
     case 0x45: { /* RCL  */     break; }
-    case 0x46: { /* ENTER*/     break; }
+    case 0x46: { endNum(); doEnter();     break; }
     case 0x47: { bldNum('0');   break; }
     case 0x48: { bldNum('.');   break; }
 
