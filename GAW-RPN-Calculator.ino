@@ -9,8 +9,11 @@
  *   0.3  : Minor improvements
  *   0.4  : Optimization
  *          Built in number entry
+ *   0.5  : Built in FRAC function
+ *          Corrected PERCENT function
+ *          Built in DIFPERC function
  *------------------------------------------------------------------------- */
-#define progVersion "0.4"                     // Program version definition
+#define progVersion "0.5"                     // Program version definition
 /* ------------------------------------------------------------------------- *
  *             GNU LICENSE CONDITIONS
  * ------------------------------------------------------------------------- *
@@ -358,28 +361,28 @@ void handleShiftF() {
     case 0x28: { /* DSE   */    break; }
 
     case 0x31: { /* PSE   */    break; }
-    case 0x32: { clearStats();  clearShiftState(); break; }
+    case 0x32: { endNum(); clearStats();  clearShiftState(); break; }
     case 0x33: { /* CL PGM*/    break; }
     case 0x34: { /* CL REG*/    break; }
     case 0x35: { /* CL PFX*/    break; }
-    case 0x36: { doRandom();    clearShiftState(); break; }
+    case 0x36: { endNum(); doRandom();    clearShiftState(); break; }
     case 0x37: { /* => R  */    break; }
     case 0x38: { /* =>HMS */    break; }
 
     case 0x41: { /* ON    */    break; }
     case 0x42: { /* f     */    break; }
     case 0x43: { /* g     */    break; }
-    case 0x44: { /* FRAC  */    break; }
+    case 0x44: { endNum(); FRAC() ;         clearShiftState(); break; }
     case 0x45: { /* USER  */    break; }
-    case 0x46: { doRandom();    clearShiftState(); break; }
-    case 0x47: { FAC();         clearShiftState(); break; }
+    case 0x46: { endNum(); doRandom();    clearShiftState(); break; }
+    case 0x47: { endNum(); FAC();         clearShiftState(); break; }
     case 0x48: { /* Y,r   */    break; }
 
     case 0x51: { /* ENG  */     break; }
     case 0x52: { /* SOLVE*/     break; }
     case 0x53: { /* ISG  */     break; }
     case 0x54: { /* f XY */     break; }
-    case 0x55: { toRAD();       clearShiftState();  break; }
+    case 0x55: { endNum(); toRAD();       clearShiftState();  break; }
     case 0x56: { /* Re Im*/     break; }
     case 0x57: { /* L.R. */     break; }
     case 0x58: { /* P x,y*/     break; }
@@ -395,29 +398,29 @@ void handleShiftF() {
 void handleShiftG() {
   switch (key) {
 
-    case 0x11: { SQRT();        clearShiftState(); break; }
-    case 0x12: { LOG();         clearShiftState(); break; }
-    case 0x13: { LOG10();       clearShiftState(); break; }
-    case 0x14: { PERCENT();     clearShiftState(); break; }
-    case 0x15: { /*  ^%   */    break; }
-    case 0x16: { ABS();         clearShiftState(); break; }
-    case 0x17: { DEG();         clearShiftState(); break; }
-    case 0x18: { RAD();         clearShiftState(); break; }
+    case 0x11: { endNum(); SQRT();        clearShiftState(); break; }
+    case 0x12: { endNum(); LOG();         clearShiftState(); break; }
+    case 0x13: { endNum(); LOG10();       clearShiftState(); break; }
+    case 0x14: { endNum(); PERCENT();     clearShiftState(); break; }
+    case 0x15: { endNum(); DIFPERC();     clearShiftState(); break; }
+    case 0x16: { endNum(); ABS();         clearShiftState(); break; }
+    case 0x17: { endNum(); DEG();         clearShiftState(); break; }
+    case 0x18: { endNum(); RAD();         clearShiftState(); break; }
 
     case 0x21: { /* BST   */    break; }
     case 0x22: { /* HYP-1 */    break; }
     case 0x23: { /* SIN-1 */    break; }
     case 0x24: { /* COS-1 */    break; }
     case 0x25: { /* TAN-1 */    break; }
-    case 0x26: { push(PI);      clearShiftState(); break; }
+    case 0x26: { endNum(); push(PI);      clearShiftState(); break; }
     case 0x27: { /* SF    */    break; }
     case 0x28: { /* CF    */    break; }
 
     case 0x31: { /* P/R   */    break; }
     case 0x32: { /* RTN   */    break; }
-    case 0x33: { rollUp();      clearShiftState(); break; }
+    case 0x33: { endNum(); rollUp();      clearShiftState(); break; }
     case 0x34: { /* RND   */    break; }
-    case 0x35: { CLX();         clearShiftState(); break; }
+    case 0x35: { endNum(); CLX();         clearShiftState(); break; }
     case 0x36: { /* LSTX  */    break; }
     case 0x37: { /* => P  */    break; }
     case 0x38: { /* => H  */    break; }
@@ -425,19 +428,19 @@ void handleShiftG() {
     case 0x41: { /* ON    */    break; }
     case 0x42: { /* f     */    break; }
     case 0x43: { /* g     */    break; }
-    case 0x44: { doInt();       clearShiftState(); break; }
+    case 0x44: { endNum(); doInt();       clearShiftState(); break; }
     case 0x45: { /* MEM   */    break; }
     case 0x46: { /* LSTX  */    break; }
-    case 0x47: { meanValues();  clearShiftState(); break; }
+    case 0x47: { endNum(); meanValues();  clearShiftState(); break; }
     case 0x48: { /* StdDev*/    break; }
 
-    case 0x51: { GRD();         clearShiftState(); break; }
+    case 0x51: { endNum(); GRD();         clearShiftState(); break; }
     case 0x52: { /* X<=Y  */    break; }
     case 0x53: { /* F?    */    break; }
     case 0x54: { /* x = 0 */    break; }
-    case 0x55: { toDEG();       clearShiftState();  break; }
+    case 0x55: { endNum(); toDEG();       clearShiftState();  break; }
     case 0x56: { /* TEST  */    break; }
-    case 0x57: { sigmaMinus();  clearShiftState();  break; }
+    case 0x57: { endNum(); sigmaMinus();  clearShiftState();  break; }
     case 0x58: { /* C x,y */    break; }
 
     default: { break; }
@@ -485,6 +488,10 @@ void doRandom() {                                 // Random Number
   push( (double)random(2147483647) / 2147483647 );
 }
 
+void FRAC() {                                    // x = int(x)
+  stack[X] = stack[X] - int(stack[X]);
+}
+
 void doInt() {                                    // x = int(x)
   stack[X] = int(stack[X]);
 }
@@ -500,8 +507,12 @@ void POW() {                                      // Y to the power of X
   twoNums( pow(stack[Y], stack[X]));
 }
 
-void PERCENT() {                                  // Take X perecnt of Y
-  twoNums( stack[Y] * stack[X] / 100 );
+void PERCENT() {                                  // Take X percent of Y
+  stack[X] = stack[Y] * stack[X] / 100;
+}
+
+void DIFPERC() {                                  // Take delta X percent of Y
+  stack[X] = ( stack[X] - stack[Y] ) *100 / stack[Y];
 }
 
 void ADD()  {                                     // Add
