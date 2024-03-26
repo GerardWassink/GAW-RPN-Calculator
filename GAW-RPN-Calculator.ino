@@ -7,8 +7,10 @@
  *   0.1  : Initial code base
  *   0.2  : Most functions built in
  *   0.3  : Minor improvements
+ *   0.4  : Optimization
+ *          Built in number entry
  *------------------------------------------------------------------------- */
-#define progVersion "0.3"                     // Program version definition
+#define progVersion "0.4"                     // Program version definition
 /* ------------------------------------------------------------------------- *
  *             GNU LICENSE CONDITIONS
  * ------------------------------------------------------------------------- *
@@ -92,15 +94,18 @@ LiquidCrystal_I2C display(0x25,20,4);   // Instantiate display object
  * ------------------------------------------------------------------------- */
 int precision = 9;                      // default precision = 9
 
-const unsigned int statDEG=0;           // goniometric state
+const unsigned int statDEG=0;           // Goniometric state
 const unsigned int statRAD=1;
 const unsigned int statGRD=2;
-unsigned int gonioStatus = statDEG;     // default to degrees
+unsigned int gonioStatus = statDEG;     // Gonio default to degrees
 
-const unsigned int noShift=0;
+const unsigned int noShift=0;           // Shift States
 const unsigned int shiftF=1;
 const unsigned int shiftG=2;
 unsigned int stateShift=noShift;        // shift default to 0 (off)
+
+String numString = "";                  // String to build number in
+bool numEntry = false;                  // Number entry state
 
 double E = 2.718281828459045;           // constant for the natural number
 
@@ -110,7 +115,7 @@ int statRegHi = 7;                      // Hi register for statistics
 /* ------------------------------------------------------------------------- *
  *                                             Stack variables X, Y, Z and T
  * ------------------------------------------------------------------------- */
-double stack[4] = {0, 0, 0, 0};
+double stack[4] = {0, 0, 0, 0}; 
 int X=0, Y=1, Z=2, T=3;
 
 /* ------------------------------------------------------------------------- *
@@ -204,9 +209,9 @@ void setup() {
  * ------------------------------------------------------------------------- */
 void loop() {
 
-#if DEBUG == 1
-  String showchar="";
-#endif
+  #if DEBUG == 1
+    String showchar="";
+  #endif
 
   key = keypad.getKey();                          // Read key from keypad
   
@@ -228,11 +233,48 @@ void loop() {
 
       default: { break; }
     }
-
-    showStack();
-
+    if (!numEntry) {
+      showStack();
+    }
   }
+}
 
+
+/* ------------------------------------------------------------------------- *
+ *                                                    Build up numeric entry
+ * ------------------------------------------------------------------------- */
+void bldNum(char c) {
+  if (!numEntry) {
+    numString = "";
+    numEntry = true;
+    rollUp();
+    LCD_display(display, 2, 3, "                 " );
+  }
+  if (c == 'Z') {
+    int l = numString.length();
+    debugln(l);
+    numString = numString.substring(0,l-1);
+  } else {
+    numString.concat(c);
+    debugln(numString);
+  }
+  LCD_display(display, 2, 3, "                 " );
+  LCD_display(display, 2, 3, numString );
+}
+
+
+/* ------------------------------------------------------------------------- *
+ *                                    Stop numeric entry and assemble number
+ * Convert string to double
+ * Store number in X register
+ * ------------------------------------------------------------------------- */
+void endNum() {
+  if (numEntry) {
+    stack[X] = numString.toDouble();
+    showStack();
+    numString = "";
+    numEntry = false;
+  }
 }
 
 
@@ -241,50 +283,50 @@ void loop() {
  * ------------------------------------------------------------------------- */
 void handleNoShift() {
   switch (key) {
-    case 0x11: { SQRT();        break; }
-    case 0x12: { EtoX();        break; }
-    case 0x13: { TENtoX();      break; }
-    case 0x14: { POW();         break; }
-    case 0x15: { OneOverX();    break; }
-    case 0x16: { CHS();         break; }
-    case 0x17: { /*   7  */     break; }
-    case 0x18: { /*   8  */     break; }
+    case 0x11: { endNum(); SQRT();        break; }
+    case 0x12: { endNum(); EtoX();        break; }
+    case 0x13: { endNum(); TENtoX();      break; }
+    case 0x14: { endNum(); POW();         break; }
+    case 0x15: { endNum(); OneOverX();    break; }
+    case 0x16: { endNum(); CHS();         break; }
+    case 0x17: { bldNum('7');   break; }
+    case 0x18: { bldNum('8');   break; }
 
     case 0x21: { /* SST  */     break; }
     case 0x22: { /* GTO  */     break; }
-    case 0x23: { SIN();         break; }
-    case 0x24: { COS();         break; }
-    case 0x25: { TAN();         break; }
+    case 0x23: { endNum(); SIN();         break; }
+    case 0x24: { endNum(); COS();         break; }
+    case 0x25: { endNum(); TAN();         break; }
     case 0x26: { /* EEX  */     break; }
-    case 0x27: { /*   4  */     break; }
-    case 0x28: { /*   5  */     break; }
+    case 0x27: { bldNum('4');   break; }
+    case 0x28: { bldNum('5');   break; }
 
     case 0x31: { /* R/S   */    break; }
     case 0x32: { /* GSB   */    break; }
-    case 0x33: { rollDown();    break; }
-    case 0x34: { swapXY();      break; }
-    case 0x35: { /* BSP   */    break; }
-    case 0x36: { doEnter();     break; }
-    case 0x37: { /*   1   */    break; }
-    case 0x38: { /*   2   */    break; }
+    case 0x33: { endNum(); rollDown();    break; }
+    case 0x34: { endNum(); swapXY();      break; }
+    case 0x35: { bldNum('Z');   break; }
+    case 0x36: { endNum(); doEnter();     break; }
+    case 0x37: { bldNum('1');   break; }
+    case 0x38: { bldNum('2');   break; }
 
     case 0x41: { /* ON   */     break; }
-    case 0x42: { makeShiftF();  break; }
-    case 0x43: { makeShiftG();  break; }
+    case 0x42: { endNum(); makeShiftF();  break; }
+    case 0x43: { endNum(); makeShiftG();  break; }
     case 0x44: { /* STO  */     break; }
     case 0x45: { /* RCL  */     break; }
     case 0x46: { /* ENTER*/     break; }
-    case 0x47: { /*   0  */     break; }
-    case 0x48: { /*   .  */     break; }
+    case 0x47: { bldNum('0');   break; }
+    case 0x48: { bldNum('.');   break; }
 
-    case 0x51: { /*   9  */     break; }
-    case 0x52: { DIVIDE();      break; }
-    case 0x53: { /*   6  */     break; }
-    case 0x54: { MULTIPLY();    break; }
-    case 0x55: { /*   3  */     break; }
-    case 0x56: { SUBTRACT();    break; }
-    case 0x57: { sigmaPlus();   break; }
-    case 0x58: { ADD();         break; }
+    case 0x51: { bldNum('9');   break; }
+    case 0x52: { endNum(); DIVIDE();      break; }
+    case 0x53: { bldNum('6');   break; }
+    case 0x54: { endNum(); MULTIPLY();    break; }
+    case 0x55: { bldNum('3');   break; }
+    case 0x56: { endNum(); SUBTRACT();    break; }
+    case 0x57: { endNum(); sigmaPlus();   break; }
+    case 0x58: { endNum(); ADD();         break; }
 
     default: { break; }
   }
@@ -407,7 +449,8 @@ void handleShiftG() {
  *                                                          Handle Enter key
  * ------------------------------------------------------------------------- */
 void doEnter() {
-  /* to be coded */
+  rollUp();
+  stack[X] = stack[Y];
 }
 
 
