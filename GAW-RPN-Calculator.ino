@@ -12,6 +12,8 @@
  *   0.5  : Built in FRAC function
  *          Corrected PERCENT function
  *          Built in DIFPERC function
+ *          Built in ASIN, ACOS and ATAN functions
+ *          Added lst X function
  *------------------------------------------------------------------------- */
 #define progVersion "0.5"                     // Program version definition
 /* ------------------------------------------------------------------------- *
@@ -120,6 +122,8 @@ int statRegHi = 7;                      // Hi register for statistics
  * ------------------------------------------------------------------------- */
 double stack[4] = {0, 0, 0, 0}; 
 int X=0, Y=1, Z=2, T=3;
+
+double lastX = 0;
 
 /* ------------------------------------------------------------------------- *
  *                                                Storage register variables
@@ -409,9 +413,9 @@ void handleShiftG() {
 
     case 0x21: { /* BST   */    break; }
     case 0x22: { /* HYP-1 */    break; }
-    case 0x23: { /* SIN-1 */    break; }
-    case 0x24: { /* COS-1 */    break; }
-    case 0x25: { /* TAN-1 */    break; }
+    case 0x23: { endNum(); ASIN();        clearShiftState(); break;  }
+    case 0x24: { endNum(); ACOS();        clearShiftState(); break;  }
+    case 0x25: { endNum(); ATAN();        clearShiftState(); break;  }
     case 0x26: { endNum(); push(PI);      clearShiftState(); break; }
     case 0x27: { /* SF    */    break; }
     case 0x28: { /* CF    */    break; }
@@ -421,7 +425,7 @@ void handleShiftG() {
     case 0x33: { endNum(); rollUp();      clearShiftState(); break; }
     case 0x34: { /* RND   */    break; }
     case 0x35: { endNum(); CLX();         clearShiftState(); break; }
-    case 0x36: { /* LSTX  */    break; }
+    case 0x36: { endNum(); lstX();        clearShiftState(); break; }
     case 0x37: { /* => P  */    break; }
     case 0x38: { /* => H  */    break; }
 
@@ -474,60 +478,70 @@ void doEnter() {
 /* ------------------------------------------------------------------------- *
  *                                                     Logarithmic functions
  * ------------------------------------------------------------------------- */
-void LOG10()  { stack[X] = log10(stack[X]); }     // 10 log OF x
-void TENtoX() { stack[X] = pow(10, stack[X]); }   // 10 TO THE POWER OF x 
-void LOG()    { stack[X] = log(stack[X]); }       // natural log OF x
-void EtoX()   { stack[X] = pow(E, stack[X]); }    // e TO THE POWER OF x
+void LOG10()  { saveLastX(); stack[X] = log10(stack[X]); }     // 10 log OF x
+void TENtoX() { saveLastX(); stack[X] = pow(10, stack[X]); }   // 10 TO THE POWER OF x 
+void LOG()    { saveLastX(); stack[X] = log(stack[X]); }       // natural log OF x
+void EtoX()   { saveLastX(); stack[X] = pow(E, stack[X]); }    // e TO THE POWER OF x
 
 
 /* ------------------------------------------------------------------------- *
  *                                                      Algebraicic functions
  * ------------------------------------------------------------------------- */
 void doRandom() {                                 // Random Number
+  saveLastX(); 
   randomSeed(analogRead(A7));
   push( (double)random(2147483647) / 2147483647 );
 }
 
 void FRAC() {                                    // x = int(x)
+  saveLastX(); 
   stack[X] = stack[X] - int(stack[X]);
 }
 
 void doInt() {                                    // x = int(x)
+  saveLastX(); 
   stack[X] = int(stack[X]);
 }
 
-void SQRT() { stack[X] = sqrt(stack[X]); }        // Square root
-void SQ()   { stack[X] = sq(stack[X]); }          // Square
+void SQRT() { saveLastX(); stack[X] = sqrt(stack[X]); }        // Square root
+void SQ()   { saveLastX(); stack[X] = sq(stack[X]); }          // Square
 
-void OneOverX()   { stack[X] = 1 / stack[X]; }    // 1 / X
-void CHS() { stack[X] = -1 * stack[X]; }          // Change Sign
-void ABS() { stack[X] = abs(stack[X]); }          // Absolute value
+void OneOverX() { saveLastX(); stack[X] = 1 / stack[X]; }    // 1 / X
+void CHS() { saveLastX(); stack[X] = -1 * stack[X]; }          // Change Sign
+void ABS() { saveLastX(); stack[X] = abs(stack[X]); }          // Absolute value
 
 void POW() {                                      // Y to the power of X
+  saveLastX(); 
   twoNums( pow(stack[Y], stack[X]));
 }
 
 void PERCENT() {                                  // Take X percent of Y
+  saveLastX(); 
   stack[X] = stack[Y] * stack[X] / 100;
 }
 
 void DIFPERC() {                                  // Take delta X percent of Y
+  saveLastX(); 
   stack[X] = ( stack[X] - stack[Y] ) *100 / stack[Y];
 }
 
 void ADD()  {                                     // Add
+  saveLastX(); 
   twoNums( stack[Y] + stack[X] );
 }
 
 void SUBTRACT()  {                                // Subtract
+  saveLastX(); 
   twoNums( stack[Y] - stack[X] );
 }
 
 void MULTIPLY()  {                                // Multiply
+  saveLastX(); 
   twoNums( stack[Y] * stack[X] );
 }
 
 void DIVIDE()  {                                  // Divide
+  saveLastX(); 
   twoNums( stack[Y] / stack[X] );
 }
 
@@ -538,6 +552,7 @@ void twoNums(double temp) {
 }
 
 void FAC()  {                                     // Factorial
+  saveLastX(); 
   double x = int(stack[X]);
   if (x <=170) {
     double r = 1;
@@ -555,14 +570,17 @@ void FAC()  {                                     // Factorial
  *                                                     Goniometric functions
  * ------------------------------------------------------------------------- */
 void toRAD() {                                    // convert degrees to Radians
+  saveLastX(); 
   stack[X] = stack[X]*2*PI/360;
 }
 
 void toDEG() {                                    // convert Radians to degrees
+  saveLastX(); 
   stack[X] = stack[X]*360/(2*PI);
 }
 
 void SIN() {                                      // Sine
+  saveLastX(); 
   switch (gonioStatus) {
     case statDEG:
       stack[X] = sin(stack[X]*2*PI/360);          // Degrees to radians
@@ -579,6 +597,7 @@ void SIN() {                                      // Sine
 }
 
 void ASIN() {                                     // Arc Sine
+  saveLastX(); 
   switch (gonioStatus) {
     case statDEG:
       stack[X] = asin(stack[X])*360/(2*PI);       // Radians to Degrees
@@ -595,6 +614,7 @@ void ASIN() {                                     // Arc Sine
 }
 
 void COS() {                                      // Cosine
+  saveLastX(); 
   switch (gonioStatus) {
     case statDEG:
       stack[X] = cos(stack[X]*2*PI/360);          // Degrees to radians
@@ -611,6 +631,7 @@ void COS() {                                      // Cosine
 }
 
 void ACOS() {                                     // Arc Cosine
+  saveLastX(); 
   switch (gonioStatus) {
     case statDEG:
       stack[X] = acos(stack[X])*360/(2*PI);       // Radians to Degrees
@@ -627,6 +648,7 @@ void ACOS() {                                     // Arc Cosine
 }
 
 void TAN() {                                      // Tangent
+  saveLastX(); 
   switch (gonioStatus) {
     case statDEG:
       stack[X] = tan(stack[X]*2*PI/360);          // Degrees to radians
@@ -643,6 +665,7 @@ void TAN() {                                      // Tangent
 }
 
 void ATAN() {                                     // Arc Tangent
+  saveLastX(); 
   switch (gonioStatus) {
     case statDEG:
       stack[X] = atan(stack[X])*360/(2*PI);       // Radians to Degrees
@@ -669,6 +692,7 @@ void clearStats() {                            // Clear statistic registters
 }
 
 void sigmaPlus() {
+  saveLastX(); 
   double x = stack[X];
   double y = stack[Y];
 
@@ -683,6 +707,7 @@ void sigmaPlus() {
 }
 
 void sigmaMinus() {
+  saveLastX(); 
   double x = stack[X];
   double y = stack[Y];
 
@@ -697,6 +722,7 @@ void sigmaMinus() {
 }
 
 void meanValues() {
+  saveLastX(); 
   push( Reg[statRegLo+3] / Reg[statRegLo] );
   push( Reg[statRegLo+1] / Reg[statRegLo] );
 }
@@ -711,16 +737,26 @@ void clearRegs() {                                 // Clear registters
   }
 }
 
+void saveLastX() {                                // Save X to lastX
+  lastX = stack[X];
+}
+
+void lstX() {                                     // Get lastX to X
+  stack[X] = lastX;
+}
+
 void STO(int reg) {                               // Store X in register
   Reg[reg] = stack[X];
 }
 
 void RCL(int reg) {                               // Recall X from register
+  saveLastX(); 
   rollUp();
   stack[X] = Reg[reg];
 }
 
 void CLX() {                                      // Recall X from register
+  saveLastX(); 
   stack[X] = 0;
 }
 
