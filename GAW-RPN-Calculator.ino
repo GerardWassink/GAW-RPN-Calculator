@@ -14,8 +14,10 @@
  *          Built in DIFPERC function
  *          Built in ASIN, ACOS and ATAN functions
  *          Added lst X function
+ *   0.6  : Rearranged routines to prepare for programming
+ *          Program storing and handling tested in setup() routine
  *------------------------------------------------------------------------- */
-#define progVersion "0.5"                     // Program version definition
+#define progVersion "0.6"                     // Program version definition
 /* ------------------------------------------------------------------------- *
  *             GNU LICENSE CONDITIONS
  * ------------------------------------------------------------------------- *
@@ -205,6 +207,13 @@ void setup() {
 //  #include "testLogaritmic.h"
 //  #include "testAlgebraics.h"
 
+  char keys[10] = {0x38, 0x37, 0x23};   // Prepare 
+  for (int i=0; i<3; i++) {             //  for program
+    key = keys[i];                      //   storing and
+    handleKeys();                       //    handling
+  }
+
+
 #endif
   // ------------ TEST AREA ------------
   // -----------------------------------
@@ -216,33 +225,37 @@ void setup() {
  * ------------------------------------------------------------------------- */
 void loop() {
 
-  #if DEBUG == 1
-    String showchar="";
-  #endif
-
   key = keypad.getKey();                          // Read key from keypad
   
   if (key) {  
     LCD_display(display, 3, 13, "   ");           // Clear ovf if we had one
+    handleKeys();                                 // Handle Keystrokes
+  }
+}
 
-    #if DEBUG == 1
-      showchar = String(key, HEX);
-      debugln(showchar + " - key pressed");
-    #endif
 
-    switch (stateShift) {
+/* ------------------------------------------------------------------------- *
+ *                                                              handleKeys()
+ * ------------------------------------------------------------------------- */
+void handleKeys() {
+  #if DEBUG == 1
+    String showchar="";
+    showchar = String(key, HEX);
+    debugln(showchar + " - key pressed");
+  #endif
 
-      case noShift: { handleNoShift(); break; }
+  switch (stateShift) {
 
-      case shiftF:  { handleShiftF();  break; }
+    case noShift: { handleNoShift(); break; }
 
-      case shiftG:  { handleShiftG();  break; }
+    case shiftF:  { handleShiftF();  break; }
 
-      default: { break; }
-    }
-    if (!numEntry) {
-      showStack();
-    }
+    case shiftG:  { handleShiftG();  break; }
+
+    default: { break; }
+  }
+  if (!numEntry) {
+    showStack();
   }
 }
 
