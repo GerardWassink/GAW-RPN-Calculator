@@ -16,6 +16,7 @@
  *          Added lst X function
  *   0.6  : Rearranged routines to prepare for programming
  *          Program storing and handling tested in setup() routine
+ *          Built in FIX functionality using X register...
  *------------------------------------------------------------------------- */
 #define progVersion "0.6"                     // Program version definition
 /* ------------------------------------------------------------------------- *
@@ -365,7 +366,8 @@ void handleShiftF() {
     case 0x14: { /*   D   */    break; }
     case 0x15: { /*   E   */    break; }
     case 0x16: { /*MATRIX */    break; }
-    case 0x17: { /* FIX   */    break; }
+//    case 0x17: { /* FIX   */    break; }
+    case 0x17: { endNum(); FIX( (int) stack[X] );  clearShiftState(); break; }
     case 0x18: { /* SCI   */    break; }
 
     case 0x21: { /* LBL   */    break; }
@@ -773,7 +775,10 @@ void CLX() {                                      // Recall X from register
   stack[X] = 0;
 }
 
-void FIX(int val) { precision = val; }
+void FIX(int val) {
+  precision = val;
+  rollDown(); 
+}
 
 void DEG() {                                      // Status to Degrees
   gonioStatus = statDEG; 
