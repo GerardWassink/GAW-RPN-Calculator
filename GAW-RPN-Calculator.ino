@@ -17,6 +17,7 @@
  *   0.6  : Rearranged routines to prepare for programming
  *          Program storing and handling tested in setup() routine
  *          Built in FIX functionality using X register...
+ *          Built in FIX() function
  *------------------------------------------------------------------------- */
 #define progVersion "0.6"                     // Program version definition
 /* ------------------------------------------------------------------------- *
@@ -196,7 +197,6 @@ void setup() {
 
   clearRegs();                          // Clear all registers
   DEG();                                // Make mode degrees by default
-  FIX(9);                               // preferred precision
   showStack();                          // Show the stack
 
   // -----------------------------------
@@ -366,8 +366,7 @@ void handleShiftF() {
     case 0x14: { /*   D   */    break; }
     case 0x15: { /*   E   */    break; }
     case 0x16: { /*MATRIX */    break; }
-//    case 0x17: { /* FIX   */    break; }
-    case 0x17: { endNum(); FIX( (int) stack[X] );  clearShiftState(); break; }
+    case 0x17: { endNum(); FIX();  clearShiftState(); break; }
     case 0x18: { /* SCI   */    break; }
 
     case 0x21: { /* LBL   */    break; }
@@ -775,9 +774,41 @@ void CLX() {                                      // Recall X from register
   stack[X] = 0;
 }
 
-void FIX(int val) {
-  precision = val;
-  rollDown(); 
+int getOneNum() {
+  key = 0;
+  int val = 99;
+  String numString = "";
+  LCD_display(display, 2, 0, "                    " );
+  do {
+    key = keypad.getKey();                        // Read key from keypad
+
+    switch (key) {
+      case 0x47: val = 0; break;
+      case 0x37: val = 1; break;
+      case 0x38: val = 2; break;
+      case 0x55: val = 3; break;
+      case 0x27: val = 4; break;
+      case 0x28: val = 5; break;
+      case 0x53: val = 6; break;
+      case 0x17: val = 7; break;
+      case 0x18: val = 8; break;
+      case 0x51: val = 9; break;
+
+      default: break;
+
+    }
+
+  } while ( val == 99 );
+  numString = String(val, DEC);
+  LCD_display(display, 2, 0, numString );
+  return val;
+}
+
+void FIX() {
+  debugln("Entering FIX()");
+  int val = 99;
+  val = getOneNum();
+  if (val >= 0 && val <= 9) { precision = val; }
 }
 
 void DEG() {                                      // Status to Degrees
