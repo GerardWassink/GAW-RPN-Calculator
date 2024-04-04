@@ -18,6 +18,8 @@
  *          Program storing and handling tested in setup() routine
  *          Built in FIX functionality using X register...
  *          Built in FIX() function
+ *          Improve startup screen
+ *          Code cleanup
  *------------------------------------------------------------------------- */
 #define progVersion "0.6"                     // Program version definition
 /* ------------------------------------------------------------------------- *
@@ -72,8 +74,16 @@
 /* ------------------------------------------------------------------------- *
  *                                              Definitions for the keyboard
  * ------------------------------------------------------------------------- */
-#define ROWS 5                              // five rows for keyboard
-#define COLS 8                              // eight columns for keyboard
+#define ROWS 5                          // five rows for keyboard
+#define COLS 8                          // eight columns for keyboard
+
+#define statDEG 0                       // Goniometric states
+#define statRAD 1
+#define statGRD 2
+
+#define noShift 0                       // Shift States
+#define shiftF  1
+#define shiftG  2
 
 
 /* ------------------------------------------------------------------------- *
@@ -103,14 +113,8 @@ LiquidCrystal_I2C display(0x25,20,4);   // Instantiate display object
  * ------------------------------------------------------------------------- */
 int precision = 9;                      // default precision = 9
 
-const unsigned int statDEG=0;           // Goniometric state
-const unsigned int statRAD=1;
-const unsigned int statGRD=2;
 unsigned int gonioStatus = statDEG;     // Gonio default to degrees
 
-const unsigned int noShift=0;           // Shift States
-const unsigned int shiftF=1;
-const unsigned int shiftG=2;
 unsigned int stateShift=noShift;        // shift default to 0 (off)
 
 String numString = "";                  // String to build number in
@@ -174,12 +178,11 @@ double Reg[30];
 void setup() {
   debugstart(115200);
 
-#if DEBUG == 0
-  display.init();                       // Initialize display
-  display.backlight();                  // Backlights on by default
+  display.init();                                 // Initialize display
+  display.backlight();                            // Backlight on
   
-  //                                                            Intro Screen
-  // Assemble and show intro text and versionb
+  //                                              Intro Screen
+  // Assemble and show intro text and version
   //
   LCD_display(display, 0, 0, "GAW RPN calculator  ");
   String myString = "version ";
@@ -190,14 +193,16 @@ void setup() {
   LCD_display(display, 3,  0, "GNU license v3" );
 
   delay(3000);
-#endif
 
-  display.init();                       // Re-initialize display
-  display.backlight();                  // Backlights on by default
+  myString = "RPN calculator ";                   // headline
+  myString.concat(progVersion);
+  LCD_display(display, 0, 0, myString);
+                                                  // clear bottom line
+  LCD_display(display, 3,  0, "                    " );
 
-  clearRegs();                          // Clear all registers
-  DEG();                                // Make mode degrees by default
-  showStack();                          // Show the stack
+  clearRegs();                                    // Clear all registers
+  DEG();                                          // Make mode degrees by default
+  showStack();                                    // Show the stack
 
   // -----------------------------------
   // ------------ TEST AREA ------------
@@ -207,13 +212,6 @@ void setup() {
 //  #include "testGoniometrics.h"
 //  #include "testLogaritmic.h"
 //  #include "testAlgebraics.h"
-
-  char keys[10] = {0x38, 0x37, 0x23};   // Prepare 
-  for (int i=0; i<3; i++) {             //  for program
-    key = keys[i];                      //   storing and
-    handleKeys();                       //    handling
-  }
-
 
 #endif
   // ------------ TEST AREA ------------
@@ -240,12 +238,13 @@ void loop() {
  * ------------------------------------------------------------------------- */
 void handleKeys() {
   #if DEBUG == 1
-    String showchar="";
-    showchar = String(key, HEX);
-    debugln(showchar + " - key pressed");
+    String showchar="";                           // Serial show
+    showchar = String(key, HEX);                  //  keypress for
+    debugln(showchar + " - key pressed");         //   debugging purposes
   #endif
 
-  switch (stateShift) {
+  switch (stateShift) {                           // Determine shift state
+                                                  //  and handle keys accordingly
 
     case noShift: { handleNoShift(); break; }
 
@@ -255,9 +254,11 @@ void handleKeys() {
 
     default: { break; }
   }
-  if (!numEntry) {
-    showStack();
+
+  if (!numEntry) {                                // No number entry in progress
+    showStack();                                  //  then show current stack
   }
+
 }
 
 
@@ -265,20 +266,21 @@ void handleKeys() {
  *                                                    Build up numeric entry
  * ------------------------------------------------------------------------- */
 void bldNum(char c) {
-  if (!numEntry) {
-    numString = "";
-    numEntry = true;
-    rollUp();
+  if (!numEntry) {                                // Starting number entry?
+    numString = "";                               // Then clear buildup string
+    numEntry = true;                              // Entering number = true
+    rollUp();                                     // Make place for new number
     LCD_display(display, 2, 3, "                 " );
   }
-  if (c == 'Z') {
-    int l = numString.length();
+  if (c == 'Z') {                                 // End of number entry?
+    int l = numString.length();                   // Determine lenght of string
     debugln(l);
-    numString = numString.substring(0,l-1);
+    numString = numString.substring(0,l-1);       // Finish string
   } else {
-    numString.concat(c);
+    numString.concat(c);                          // Concatenate number
     debugln(numString);
   }
+                                                  // Display number so far
   LCD_display(display, 2, 3, "                 " );
   LCD_display(display, 2, 3, numString );
 }
@@ -290,11 +292,11 @@ void bldNum(char c) {
  * Store number in X register
  * ------------------------------------------------------------------------- */
 void endNum() {
-  if (numEntry) {
-    stack[X] = numString.toDouble();
-    showStack();
-    numString = "";
-    numEntry = false;
+  if (numEntry) {                                 // Check num entry was going on
+    stack[X] = numString.toDouble();              // If so, put num in X register
+    showStack();                                  // Show new stack status
+    numString = "";                               // clear num string for next time
+    numEntry = false;                             // Stop num entry
   }
 }
 
@@ -310,41 +312,41 @@ void handleNoShift() {
     case 0x14: { endNum(); POW();         break; }
     case 0x15: { endNum(); OneOverX();    break; }
     case 0x16: { endNum(); CHS();         break; }
-    case 0x17: { bldNum('7');   break; }
-    case 0x18: { bldNum('8');   break; }
+    case 0x17: { bldNum('7');             break; }
+    case 0x18: { bldNum('8');             break; }
 
-    case 0x21: { /* SST  */     break; }
-    case 0x22: { /* GTO  */     break; }
+    case 0x21: { /* SST  */               break; }
+    case 0x22: { /* GTO  */               break; }
     case 0x23: { endNum(); SIN();         break; }
     case 0x24: { endNum(); COS();         break; }
     case 0x25: { endNum(); TAN();         break; }
-    case 0x26: { /* EEX  */     break; }
-    case 0x27: { bldNum('4');   break; }
-    case 0x28: { bldNum('5');   break; }
+    case 0x26: { /* EEX  */               break; }
+    case 0x27: { bldNum('4');             break; }
+    case 0x28: { bldNum('5');             break; }
 
-    case 0x31: { /* R/S   */    break; }
-    case 0x32: { /* GSB   */    break; }
+    case 0x31: { /* R/S   */              break; }
+    case 0x32: { /* GSB   */              break; }
     case 0x33: { endNum(); rollDown();    break; }
     case 0x34: { endNum(); swapXY();      break; }
-    case 0x35: { bldNum('Z');   break; }
+    case 0x35: { bldNum('Z');             break; }
     case 0x36: { endNum(); doEnter();     break; }
-    case 0x37: { bldNum('1');   break; }
-    case 0x38: { bldNum('2');   break; }
+    case 0x37: { bldNum('1');             break; }
+    case 0x38: { bldNum('2');             break; }
 
-    case 0x41: { /* ON   */     break; }
+    case 0x41: { /* ON   */               break; }
     case 0x42: { endNum(); makeShiftF();  break; }
     case 0x43: { endNum(); makeShiftG();  break; }
-    case 0x44: { /* STO  */     break; }
-    case 0x45: { /* RCL  */     break; }
+    case 0x44: { /* STO  */               break; }
+    case 0x45: { /* RCL  */               break; }
     case 0x46: { endNum(); doEnter();     break; }
-    case 0x47: { bldNum('0');   break; }
-    case 0x48: { bldNum('.');   break; }
+    case 0x47: { bldNum('0');             break; }
+    case 0x48: { bldNum('.');             break; }
 
-    case 0x51: { bldNum('9');   break; }
+    case 0x51: { bldNum('9');             break; }
     case 0x52: { endNum(); DIVIDE();      break; }
-    case 0x53: { bldNum('6');   break; }
+    case 0x53: { bldNum('6');             break; }
     case 0x54: { endNum(); MULTIPLY();    break; }
-    case 0x55: { bldNum('3');   break; }
+    case 0x55: { bldNum('3');             break; }
     case 0x56: { endNum(); SUBTRACT();    break; }
     case 0x57: { endNum(); sigmaPlus();   break; }
     case 0x58: { endNum(); ADD();         break; }
@@ -360,50 +362,50 @@ void handleNoShift() {
 void handleShiftF() {
   switch (key) {
 
-    case 0x11: { /*   A   */    break; }
-    case 0x12: { /*   B   */    break; }
-    case 0x13: { /*   C   */    break; }
-    case 0x14: { /*   D   */    break; }
-    case 0x15: { /*   E   */    break; }
-    case 0x16: { /*MATRIX */    break; }
+    case 0x11: { /*   A   */              break; }
+    case 0x12: { /*   B   */              break; }
+    case 0x13: { /*   C   */              break; }
+    case 0x14: { /*   D   */              break; }
+    case 0x15: { /*   E   */              break; }
+    case 0x16: { /*MATRIX */              break; }
     case 0x17: { endNum(); FIX();  clearShiftState(); break; }
-    case 0x18: { /* SCI   */    break; }
+    case 0x18: { /* SCI   */              break; }
 
-    case 0x21: { /* LBL   */    break; }
-    case 0x22: { /* HYP   */    break; }
-    case 0x23: { /* DIM   */    break; }
-    case 0x24: { /* (i)   */    break; }
-    case 0x25: { /* I     */    break; }
-    case 0x26: { /*RESULT */    break; }
-    case 0x27: { /* X><   */    break; }
-    case 0x28: { /* DSE   */    break; }
+    case 0x21: { /* LBL   */              break; }
+    case 0x22: { /* HYP   */              break; }
+    case 0x23: { /* DIM   */              break; }
+    case 0x24: { /* (i)   */              break; }
+    case 0x25: { /* I     */              break; }
+    case 0x26: { /*RESULT */              break; }
+    case 0x27: { /* X><   */              break; }
+    case 0x28: { /* DSE   */              break; }
 
-    case 0x31: { /* PSE   */    break; }
+    case 0x31: { /* PSE   */              break; }
     case 0x32: { endNum(); clearStats();  clearShiftState(); break; }
-    case 0x33: { /* CL PGM*/    break; }
-    case 0x34: { /* CL REG*/    break; }
-    case 0x35: { /* CL PFX*/    break; }
+    case 0x33: { /* CL PGM*/              break; }
+    case 0x34: { /* CL REG*/              break; }
+    case 0x35: { /* CL PFX*/              break; }
     case 0x36: { endNum(); doRandom();    clearShiftState(); break; }
-    case 0x37: { /* => R  */    break; }
-    case 0x38: { /* =>HMS */    break; }
+    case 0x37: { /* => R  */              break; }
+    case 0x38: { /* =>HMS */              break; }
 
-    case 0x41: { /* ON    */    break; }
-    case 0x42: { /* f     */    break; }
-    case 0x43: { /* g     */    break; }
-    case 0x44: { endNum(); FRAC() ;         clearShiftState(); break; }
-    case 0x45: { /* USER  */    break; }
+    case 0x41: { /* ON    */              break; }
+    case 0x42: { /* f     */              break; }
+    case 0x43: { /* g     */              break; }
+    case 0x44: { endNum(); FRAC() ;       clearShiftState(); break; }
+    case 0x45: { /* USER  */              break; }
     case 0x46: { endNum(); doRandom();    clearShiftState(); break; }
     case 0x47: { endNum(); FAC();         clearShiftState(); break; }
-    case 0x48: { /* Y,r   */    break; }
+    case 0x48: { /* Y,r   */              break; }
 
-    case 0x51: { /* ENG  */     break; }
-    case 0x52: { /* SOLVE*/     break; }
-    case 0x53: { /* ISG  */     break; }
-    case 0x54: { /* f XY */     break; }
+    case 0x51: { /* ENG  */               break; }
+    case 0x52: { /* SOLVE*/               break; }
+    case 0x53: { /* ISG  */               break; }
+    case 0x54: { /* f XY */               break; }
     case 0x55: { endNum(); toRAD();       clearShiftState();  break; }
-    case 0x56: { /* Re Im*/     break; }
-    case 0x57: { /* L.R. */     break; }
-    case 0x58: { /* P x,y*/     break; }
+    case 0x56: { /* Re Im*/               break; }
+    case 0x57: { /* L.R. */               break; }
+    case 0x58: { /* P x,y*/               break; }
 
     default: { break; }
   }
@@ -425,41 +427,41 @@ void handleShiftG() {
     case 0x17: { endNum(); DEG();         clearShiftState(); break; }
     case 0x18: { endNum(); RAD();         clearShiftState(); break; }
 
-    case 0x21: { /* BST   */    break; }
-    case 0x22: { /* HYP-1 */    break; }
+    case 0x21: { /* BST   */                                 break; }
+    case 0x22: { /* HYP-1 */                                 break; }
     case 0x23: { endNum(); ASIN();        clearShiftState(); break;  }
     case 0x24: { endNum(); ACOS();        clearShiftState(); break;  }
     case 0x25: { endNum(); ATAN();        clearShiftState(); break;  }
     case 0x26: { endNum(); push(PI);      clearShiftState(); break; }
-    case 0x27: { /* SF    */    break; }
-    case 0x28: { /* CF    */    break; }
+    case 0x27: { /* SF    */                                 break; }
+    case 0x28: { /* CF    */                                 break; }
 
-    case 0x31: { /* P/R   */    break; }
-    case 0x32: { /* RTN   */    break; }
+    case 0x31: { /* P/R   */                                 break; }
+    case 0x32: { /* RTN   */                                 break; }
     case 0x33: { endNum(); rollUp();      clearShiftState(); break; }
-    case 0x34: { /* RND   */    break; }
+    case 0x34: { /* RND   */                                 break; }
     case 0x35: { endNum(); CLX();         clearShiftState(); break; }
     case 0x36: { endNum(); lstX();        clearShiftState(); break; }
-    case 0x37: { /* => P  */    break; }
-    case 0x38: { /* => H  */    break; }
+    case 0x37: { /* => P  */                                 break; }
+    case 0x38: { /* => H  */                                 break; }
 
-    case 0x41: { /* ON    */    break; }
-    case 0x42: { /* f     */    break; }
-    case 0x43: { /* g     */    break; }
+    case 0x41: { /* ON    */                                 break; }
+    case 0x42: { /* f     */                                 break; }
+    case 0x43: { /* g     */                                 break; }
     case 0x44: { endNum(); doInt();       clearShiftState(); break; }
-    case 0x45: { /* MEM   */    break; }
-    case 0x46: { /* LSTX  */    break; }
+    case 0x45: { /* MEM   */                                 break; }
+    case 0x46: { /* LSTX  */                                 break; }
     case 0x47: { endNum(); meanValues();  clearShiftState(); break; }
-    case 0x48: { /* StdDev*/    break; }
+    case 0x48: { /* StdDev*/                                 break; }
 
     case 0x51: { endNum(); GRD();         clearShiftState(); break; }
-    case 0x52: { /* X<=Y  */    break; }
-    case 0x53: { /* F?    */    break; }
-    case 0x54: { /* x = 0 */    break; }
-    case 0x55: { endNum(); toDEG();       clearShiftState();  break; }
-    case 0x56: { /* TEST  */    break; }
-    case 0x57: { endNum(); sigmaMinus();  clearShiftState();  break; }
-    case 0x58: { /* C x,y */    break; }
+    case 0x52: { /* X<=Y  */                                 break; }
+    case 0x53: { /* F?    */                                 break; }
+    case 0x54: { /* x = 0 */                                 break; }
+    case 0x55: { endNum(); toDEG();       clearShiftState(); break; }
+    case 0x56: { /* TEST  */                                 break; }
+    case 0x57: { endNum(); sigmaMinus();  clearShiftState(); break; }
+    case 0x58: { /* C x,y */                                 break; }
 
     default: { break; }
   }
@@ -568,7 +570,7 @@ void twoNums(double temp) {
 void FAC()  {                                     // Factorial
   saveLastX(); 
   double x = int(stack[X]);
-  if (x <=170) {
+  if (x <=170) {                                  // Check overflow
     double r = 1;
     for (double i=2; i<=x; i++) {
       r = r * i; 
@@ -889,10 +891,11 @@ void clearShiftState() {
  * ------------------------------------------------------------------------- */
 void showStack() {
   String myString = "Z: ";
+/*
   myString.concat(String(stack[Z], precision));
   myString.concat(F("                    "));
   LCD_display(display, 0, 0, myString.substring(0,20) );
-
+*/
   myString = "Y: ";
   myString.concat(String(stack[Y], precision));
   myString.concat(F("                    "));
