@@ -20,8 +20,11 @@
  *          Built in FIX() function
  *          Improve startup screen
  *          Code cleanup
+ *   0.7  : Added PSE() routine
+ *          Added STO command / routine
+ *          Added RCL command / routine
  *------------------------------------------------------------------------- */
-#define progVersion "0.6"                     // Program version definition
+#define progVersion "0.7"                     // Program version definition
 /* ------------------------------------------------------------------------- *
  *             GNU LICENSE CONDITIONS
  * ------------------------------------------------------------------------- *
@@ -212,6 +215,7 @@ void setup() {
 //  #include "testGoniometrics.h"
 //  #include "testLogaritmic.h"
 //  #include "testAlgebraics.h"
+//  #include "STO-RCL.h"
 
 #endif
   // ------------ TEST AREA ------------
@@ -336,8 +340,8 @@ void handleNoShift() {
     case 0x41: { /* ON   */               break; }
     case 0x42: { endNum(); makeShiftF();  break; }
     case 0x43: { endNum(); makeShiftG();  break; }
-    case 0x44: { /* STO  */               break; }
-    case 0x45: { /* RCL  */               break; }
+    case 0x44: { endNum(); STO();         break; }
+    case 0x45: { endNum(); RCL();         break; }
     case 0x46: { endNum(); doEnter();     break; }
     case 0x47: { bldNum('0');             break; }
     case 0x48: { bldNum('.');             break; }
@@ -368,7 +372,7 @@ void handleShiftF() {
     case 0x14: { /*   D   */              break; }
     case 0x15: { /*   E   */              break; }
     case 0x16: { /*MATRIX */              break; }
-    case 0x17: { endNum(); FIX();  clearShiftState(); break; }
+    case 0x17: { endNum(); FIX();  clearShiftState();        break; }
     case 0x18: { /* SCI   */              break; }
 
     case 0x21: { /* LBL   */              break; }
@@ -380,7 +384,7 @@ void handleShiftF() {
     case 0x27: { /* X><   */              break; }
     case 0x28: { /* DSE   */              break; }
 
-    case 0x31: { /* PSE   */              break; }
+    case 0x31: { endNum(); PSE();         clearShiftState(); break; }
     case 0x32: { endNum(); clearStats();  clearShiftState(); break; }
     case 0x33: { /* CL PGM*/              break; }
     case 0x34: { /* CL REG*/              break; }
@@ -390,8 +394,8 @@ void handleShiftF() {
     case 0x38: { /* =>HMS */              break; }
 
     case 0x41: { /* ON    */              break; }
-    case 0x42: { /* f     */              break; }
-    case 0x43: { /* g     */              break; }
+    case 0x42: { endNum(); makeShiftF();  break; }
+    case 0x43: { endNum(); makeShiftG();  break; }
     case 0x44: { endNum(); FRAC() ;       clearShiftState(); break; }
     case 0x45: { /* USER  */              break; }
     case 0x46: { endNum(); doRandom();    clearShiftState(); break; }
@@ -402,7 +406,7 @@ void handleShiftF() {
     case 0x52: { /* SOLVE*/               break; }
     case 0x53: { /* ISG  */               break; }
     case 0x54: { /* f XY */               break; }
-    case 0x55: { endNum(); toRAD();       clearShiftState();  break; }
+    case 0x55: { endNum(); toRAD();       clearShiftState(); break; }
     case 0x56: { /* Re Im*/               break; }
     case 0x57: { /* L.R. */               break; }
     case 0x58: { /* P x,y*/               break; }
@@ -429,9 +433,9 @@ void handleShiftG() {
 
     case 0x21: { /* BST   */                                 break; }
     case 0x22: { /* HYP-1 */                                 break; }
-    case 0x23: { endNum(); ASIN();        clearShiftState(); break;  }
-    case 0x24: { endNum(); ACOS();        clearShiftState(); break;  }
-    case 0x25: { endNum(); ATAN();        clearShiftState(); break;  }
+    case 0x23: { endNum(); ASIN();        clearShiftState(); break; }
+    case 0x24: { endNum(); ACOS();        clearShiftState(); break; }
+    case 0x25: { endNum(); ATAN();        clearShiftState(); break; }
     case 0x26: { endNum(); push(PI);      clearShiftState(); break; }
     case 0x27: { /* SF    */                                 break; }
     case 0x28: { /* CF    */                                 break; }
@@ -446,11 +450,11 @@ void handleShiftG() {
     case 0x38: { /* => H  */                                 break; }
 
     case 0x41: { /* ON    */                                 break; }
-    case 0x42: { /* f     */                                 break; }
-    case 0x43: { /* g     */                                 break; }
+    case 0x42: { endNum(); makeShiftF();    	               break; }
+    case 0x43: { endNum(); makeShiftG();                     break; }
     case 0x44: { endNum(); doInt();       clearShiftState(); break; }
     case 0x45: { /* MEM   */                                 break; }
-    case 0x46: { /* LSTX  */                                 break; }
+    case 0x46: { endNum(); lstX();                           break; }
     case 0x47: { endNum(); meanValues();  clearShiftState(); break; }
     case 0x48: { /* StdDev*/                                 break; }
 
@@ -745,6 +749,14 @@ void meanValues() {
 
 
 /* ------------------------------------------------------------------------- *
+ *                                             Programming related functions
+ * ------------------------------------------------------------------------- */
+void PSE() {                                      // Pause program 1 second
+  delay(1000);
+}
+
+
+/* ------------------------------------------------------------------------- *
  *                                                      Calculator functions
  * ------------------------------------------------------------------------- */
 void clearRegs() {                                 // Clear registters
@@ -758,17 +770,18 @@ void saveLastX() {                                // Save X to lastX
 }
 
 void lstX() {                                     // Get lastX to X
+  rollUp();
   stack[X] = lastX;
 }
 
-void STO(int reg) {                               // Store X in register
-  Reg[reg] = stack[X];
+void STO() {                                      // Store X in register
+  Reg[getReg()] = stack[X];
 }
 
-void RCL(int reg) {                               // Recall X from register
+void RCL() {                                     // Recall X from register
   saveLastX(); 
   rollUp();
-  stack[X] = Reg[reg];
+  stack[X] = Reg[getReg()];
 }
 
 void CLX() {                                      // Recall X from register
@@ -776,11 +789,20 @@ void CLX() {                                      // Recall X from register
   stack[X] = 0;
 }
 
-int getOneNum() {
-  key = 0;
+
+//                                                --------------------------
+//                                                Display state settings
+//                                                --------------------------
+
+void FIX() {                                      // set # of digits
+  debugln("Entering FIX()");
   int val = 99;
-  String numString = "";
-  LCD_display(display, 2, 0, "                    " );
+  val = getOneNum();
+  if (val >= 0 && val <= 9) { precision = val; }
+}
+
+int getOneNum() {                                 // get number for FIX
+  int val = 99;
   do {
     key = keypad.getKey();                        // Read key from keypad
 
@@ -795,23 +817,47 @@ int getOneNum() {
       case 0x17: val = 7; break;
       case 0x18: val = 8; break;
       case 0x51: val = 9; break;
-
-      default: break;
-
+      default:            break;
     }
 
   } while ( val == 99 );
-  numString = String(val, DEC);
-  LCD_display(display, 2, 0, numString );
+
   return val;
 }
 
-void FIX() {
-  debugln("Entering FIX()");
-  int val = 99;
-  val = getOneNum();
-  if (val >= 0 && val <= 9) { precision = val; }
+int getReg() {                                    // get Register
+  int val = 0;
+  bool getDone = false;
+  do {
+    key = keypad.getKey();                        // Read key from keypad
+
+    switch (key) {
+      case 0x48: val += 10;                 break;  // decimal point: offset 10
+      case 0x47: val +=  0; getDone = true; break;  // add values 0 - 9
+      case 0x37: val +=  1; getDone = true; break;
+      case 0x38: val +=  2; getDone = true; break;
+      case 0x55: val +=  3; getDone = true; break;
+      case 0x27: val +=  4; getDone = true; break;
+      case 0x28: val +=  5; getDone = true; break;
+      case 0x53: val +=  6; getDone = true; break;
+      case 0x17: val +=  7; getDone = true; break;
+      case 0x18: val +=  8; getDone = true; break;
+      case 0x51: val +=  9; getDone = true; break;
+      default: break;
+    }
+
+  } while ( getDone == false );
+
+  debugln(String(val, 10));
+
+  return val;
+
 }
+
+
+//                                                --------------------------
+//                                                Goniometric state settings
+//                                                --------------------------
 
 void DEG() {                                      // Status to Degrees
   gonioStatus = statDEG; 
