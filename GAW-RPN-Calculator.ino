@@ -23,8 +23,10 @@
  *   0.7  : Added PSE() routine
  *          Added STO command / routine
  *          Added RCL command / routine
+ *   0.8  : Display improvement for FIX and exponent display
+ *          Implemented EEX() function
  *------------------------------------------------------------------------- */
-#define progVersion "0.7"                     // Program version definition
+#define progVersion "0.8"                     // Program version definition
 /* ------------------------------------------------------------------------- *
  *             GNU LICENSE CONDITIONS
  * ------------------------------------------------------------------------- *
@@ -53,7 +55,9 @@
 // item		    startpos	  endpos    values
 // ----------	--------    ------    --------------------------------
 // shiftState     4          4      f, g
-// gonioState    17         19      rad, grd (spaces when Degree mode)
+// displError     9         11      ovf
+// displState    13         15      fix, sci, eng
+// gonioState    17         19      rad, grd, deg
 
 
 /* ------------------------------------------------------------------------- *
@@ -88,6 +92,10 @@
 #define shiftF  1
 #define shiftG  2
 
+#define dispFix 0                       // Display states
+#define dispSci 1
+#define dispEng 2
+
 
 /* ------------------------------------------------------------------------- *
  *                                                          Library includes
@@ -119,6 +127,8 @@ int precision = 9;                      // default precision = 9
 unsigned int gonioStatus = statDEG;     // Gonio default to degrees
 
 unsigned int stateShift=noShift;        // shift default to 0 (off)
+
+unsigned int dispState=dispFix;         // shift default to 0 (off)
 
 String numString = "";                  // String to build number in
 bool numEntry = false;                  // Number entry state
@@ -202,6 +212,8 @@ void setup() {
   LCD_display(display, 0, 0, myString);
                                                   // clear bottom line
   LCD_display(display, 3,  0, "                    " );
+  LCD_display(display, 3,13, F("fix") );          // assuming fix as default
+
 
   clearRegs();                                    // Clear all registers
   DEG();                                          // Make mode degrees by default
@@ -230,40 +242,35 @@ void loop() {
 
   key = keypad.getKey();                          // Read key from keypad
   
-  if (key) {  
-    LCD_display(display, 3, 13, "   ");           // Clear ovf if we had one
-    handleKeys();                                 // Handle Keystrokes
-  }
-}
+  if (key)
+  {
+    LCD_display(display, 3,  9, "   ");           // Clear ovf if we had one
 
+#if DEBUG == 1
+  String showchar="";                           // Serial show
+  showchar = String(key, HEX);                  //  keypress for
+  debugln(showchar + " - key pressed");         //   debugging purposes
+#endif
 
-/* ------------------------------------------------------------------------- *
- *                                                              handleKeys()
- * ------------------------------------------------------------------------- */
-void handleKeys() {
-  #if DEBUG == 1
-    String showchar="";                           // Serial show
-    showchar = String(key, HEX);                  //  keypress for
-    debugln(showchar + " - key pressed");         //   debugging purposes
-  #endif
+    switch (stateShift)                             // Determine shift state
+    {                                               //  and handle keys accordingly
+      case noShift: { handleNoShift(); break; }
 
-  switch (stateShift) {                           // Determine shift state
-                                                  //  and handle keys accordingly
+      case shiftF:  { handleShiftF();  break; }
 
-    case noShift: { handleNoShift(); break; }
+      case shiftG:  { handleShiftG();  break; }
 
-    case shiftF:  { handleShiftF();  break; }
+      default: { break; }
+    }
 
-    case shiftG:  { handleShiftG();  break; }
+    if (!numEntry) {                                // No number entry in progress
+      showStack();                                  //  then show current stack
+    }
 
-    default: { break; }
-  }
-
-  if (!numEntry) {                                // No number entry in progress
-    showStack();                                  //  then show current stack
   }
 
 }
+
 
 
 /* ------------------------------------------------------------------------- *
@@ -276,10 +283,10 @@ void bldNum(char c) {
     rollUp();                                     // Make place for new number
     LCD_display(display, 2, 3, "                 " );
   }
-  if (c == 'Z') {                                 // End of number entry?
+  if (c == 'Z') {                                 // Backspace??
     int l = numString.length();                   // Determine lenght of string
     debugln(l);
-    numString = numString.substring(0,l-1);       // Finish string
+    numString = numString.substring(0,l-1);       // Remove last character
   } else {
     numString.concat(c);                          // Concatenate number
     debugln(numString);
@@ -324,7 +331,7 @@ void handleNoShift() {
     case 0x23: { endNum(); SIN();         break; }
     case 0x24: { endNum(); COS();         break; }
     case 0x25: { endNum(); TAN();         break; }
-    case 0x26: { /* EEX  */               break; }
+    case 0x26: { endNum(); EEX();         break; }
     case 0x27: { bldNum('4');             break; }
     case 0x28: { bldNum('5');             break; }
 
@@ -523,12 +530,12 @@ void doInt() {                                    // x = int(x)
   stack[X] = int(stack[X]);
 }
 
-void SQRT() { saveLastX(); stack[X] = sqrt(stack[X]); }        // Square root
-void SQ()   { saveLastX(); stack[X] = sq(stack[X]); }          // Square
+void SQRT() { saveLastX(); stack[X] = sqrt(stack[X]); }     // Square root
+void SQ()   { saveLastX(); stack[X] = sq(stack[X]); }       // Square
 
-void OneOverX() { saveLastX(); stack[X] = 1 / stack[X]; }    // 1 / X
-void CHS() { saveLastX(); stack[X] = -1 * stack[X]; }          // Change Sign
-void ABS() { saveLastX(); stack[X] = abs(stack[X]); }          // Absolute value
+void OneOverX() { saveLastX(); stack[X] = 1 / stack[X]; }   // 1 / X
+void CHS() { saveLastX(); stack[X] = -1 * stack[X]; }       // Change Sign
+void ABS() { saveLastX(); stack[X] = abs(stack[X]); }       // Absolute value
 
 void POW() {                                      // Y to the power of X
   saveLastX(); 
@@ -581,7 +588,7 @@ void FAC()  {                                     // Factorial
     }
     stack[X] = r;
   } else {
-    LCD_display(display, 3, 13, "ovf");
+    LCD_display(display, 3, 9, "ovf");
   }
 }
 
@@ -774,6 +781,85 @@ void lstX() {                                     // Get lastX to X
   stack[X] = lastX;
 }
 
+void EEX() {                                      // Specify exponent
+  bool positive = true;
+  bool goOn = true;
+  String numString = "";
+  int l = 0;
+  int exp = 0;
+                                                  // get max two digits
+                                                  // display them at 3,18 and 3,19
+                                                  // allow for BSP
+                                                  // if CHS pressed change the sign at 3,17
+                                                  // enter pressed?
+                                                  //    build number
+                                                  //      recalculate X
+                                                  //        return
+
+  do {
+    l = numString.length();
+
+    key = keypad.getKey();                        // Read key from keypad
+
+    if (key != 0) {
+
+      switch (key)
+      {
+        case 0x16:                                  // CHS
+        {
+          positive = !positive;
+          if (positive) 
+          {
+            LCD_display(display, 2,17, " " );
+          } else{
+            LCD_display(display, 2,17, "-" );
+          }
+          break;
+        }
+
+        case 0x35:                                  // BSP
+        {
+          if (l > 0)
+          {
+            numString = numString.substring(0, l - 1 );
+            LCD_display(display, 2,18, "  " );
+            LCD_display(display, 2,18, numString );
+          }
+          break;
+        }
+
+        case 0x36:                                  // ENTER
+        case 0x46:                                  // ENTER
+        {
+          exp = numString.toDouble();
+          if ( !positive ) exp = -1 * exp;
+          stack[X] = stack[X] * pow( 10, exp );
+          goOn = false;
+        }
+
+        case 0x47: if (l<2) numString.concat("0"); break;
+        case 0x37: if (l<2) numString.concat("1"); break;
+        case 0x38: if (l<2) numString.concat("2"); break;
+        case 0x55: if (l<2) numString.concat("3"); break;
+        case 0x27: if (l<2) numString.concat("4"); break;
+        case 0x28: if (l<2) numString.concat("5"); break;
+        case 0x53: if (l<2) numString.concat("6"); break;
+        case 0x17: if (l<2) numString.concat("7"); break;
+        case 0x18: if (l<2) numString.concat("8"); break;
+        case 0x51: if (l<2) numString.concat("9"); break;
+
+        default:                                   break;
+      }
+
+      LCD_display(display, 2,18, "  " );
+      LCD_display(display, 2,18, numString );
+    }
+  } while ( goOn );
+
+  return;
+
+}
+
 void STO() {                                      // Store X in register
   Reg[getReg()] = stack[X];
 }
@@ -801,7 +887,7 @@ void FIX() {                                      // set # of digits
   if (val >= 0 && val <= 9) { precision = val; }
 }
 
-int getOneNum() {                                 // get number for FIX
+int getOneNum() {                                 // get one digit
   int val = 99;
   do {
     key = keypad.getKey();                        // Read key from keypad
@@ -821,6 +907,8 @@ int getOneNum() {                                 // get number for FIX
     }
 
   } while ( val == 99 );
+
+  LCD_display(display, 3,13, F("fix") );
 
   return val;
 }
@@ -848,7 +936,7 @@ int getReg() {                                    // get Register
 
   } while ( getDone == false );
 
-  debugln(String(val, 10));
+debugln(String(val, 10));
 
   return val;
 
@@ -906,13 +994,13 @@ void rollUp() {                                   // Roll stack up
  *                                                     Shift state functions
  * ------------------------------------------------------------------------- */
 void makeShiftF() {
-  debugln("Making shift state F");
+debugln("Making shift state F");
   stateShift = shiftF;
   LCD_display(display, 3, 4, F("f") );
 }
 
 void makeShiftG() {
-  debugln("Making shift state G");
+debugln("Making shift state G");
   stateShift = shiftG;
   LCD_display(display, 3, 4, F("g") );
 }
@@ -936,21 +1024,87 @@ void clearShiftState() {
  *                                                               showStack()
  * ------------------------------------------------------------------------- */
 void showStack() {
-  String myString = "Z: ";
-/*
-  myString.concat(String(stack[Z], precision));
-  myString.concat(F("                    "));
-  LCD_display(display, 0, 0, myString.substring(0,20) );
-*/
+  String myString;
+
   myString = "Y: ";
-  myString.concat(String(stack[Y], precision));
+debug("stack[Y] = "); debugln(stack[Y]);
+//  myString.concat(String(stack[Y], precision));
+  myString.concat( numMakeup(stack[Y]) );
   myString.concat(F("                    "));
   LCD_display(display, 1, 0, myString.substring(0,20) );
 
   myString = "X: ";
-  myString.concat(String(stack[X], precision));
+//  myString.concat(String(stack[X], precision));
+debug("stack[X] = "); debugln(stack[X]);
+  myString.concat( numMakeup(stack[X]) );
   myString.concat(F("                    "));
   LCD_display(display, 2, 0, myString.substring(0,20) );
+}
+
+
+/* ------------------------------------------------------------------------- *
+ *    routine to format number depending on mode and precision - numMakeup()
+ * ------------------------------------------------------------------------- */
+String numMakeup(double n) {
+  String numString = "";
+  double expn;
+  double newNum = 0;
+
+  if (n == 0.0) {
+    expn = 0.0;
+  } else {
+    expn = int( log10( abs(n) ) );
+  }
+
+debug("n    = "); debugln(n);
+debug("expn = "); debugln(expn);
+
+  switch (dispState) {
+
+    case dispFix:                                 // FIX diaplay
+      if (expn > 9.0)
+      {
+         newNum = (double)( n / pow(10.0, expn) );
+debug(" newNum = "); debugln(String(newNum,9));
+         numString.concat( String(newNum, precision) );
+         numString.concat( F("             "));
+         numString = numString.substring(0, 14);
+         numString.concat( String( (int)expn) );
+
+      } 
+      else if (expn < (-9.0) ) 
+      {
+
+         newNum = (double)( n * pow(10.0, (expn) ) );
+debug(" newNum = "); debugln(String(newNum,9));
+         numString.concat( String(newNum, precision) );
+         numString.concat( F("             "));
+         numString = numString.substring(0, 14);
+         numString.concat( String( (int)expn) );
+
+      }
+      else 
+      {
+
+debug("n = "); debugln(n);
+         numString.concat( String(n, precision) );
+         numString.concat( F("             "));
+         numString = numString.substring(0, 17);
+      }
+      break;
+
+    case dispSci:                                 // SCI diaplay
+      break;
+    
+    case dispEng:                                 // ENG diaplay
+      break;
+    
+    default:
+      break;
+    
+  }
+
+  return numString;
 }
 
 
