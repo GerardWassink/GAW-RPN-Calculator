@@ -25,6 +25,7 @@
  *          Added RCL command / routine
  *   0.8  : Display improvement for FIX and exponent display
  *          Implemented EEX() function
+ *          Removed some dbugging
  *------------------------------------------------------------------------- */
 #define progVersion "0.8"                     // Program version definition
 /* ------------------------------------------------------------------------- *
@@ -285,11 +286,9 @@ void bldNum(char c) {
   }
   if (c == 'Z') {                                 // Backspace??
     int l = numString.length();                   // Determine lenght of string
-    debugln(l);
     numString = numString.substring(0,l-1);       // Remove last character
   } else {
     numString.concat(c);                          // Concatenate number
-    debugln(numString);
   }
                                                   // Display number so far
   LCD_display(display, 2, 3, "                 " );
@@ -881,7 +880,6 @@ void CLX() {                                      // Recall X from register
 //                                                --------------------------
 
 void FIX() {                                      // set # of digits
-  debugln("Entering FIX()");
   int val = 99;
   val = getOneNum();
   if (val >= 0 && val <= 9) { precision = val; }
@@ -935,8 +933,6 @@ int getReg() {                                    // get Register
     }
 
   } while ( getDone == false );
-
-debugln(String(val, 10));
 
   return val;
 
@@ -1027,7 +1023,6 @@ void showStack() {
   String myString;
 
   myString = "Y: ";
-debug("stack[Y] = "); debugln(stack[Y]);
 //  myString.concat(String(stack[Y], precision));
   myString.concat( numMakeup(stack[Y]) );
   myString.concat(F("                    "));
@@ -1035,7 +1030,6 @@ debug("stack[Y] = "); debugln(stack[Y]);
 
   myString = "X: ";
 //  myString.concat(String(stack[X], precision));
-debug("stack[X] = "); debugln(stack[X]);
   myString.concat( numMakeup(stack[X]) );
   myString.concat(F("                    "));
   LCD_display(display, 2, 0, myString.substring(0,20) );
