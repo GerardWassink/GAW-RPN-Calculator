@@ -26,8 +26,12 @@
  *   0.8  : Display improvement for FIX and exponent display
  *          Implemented EEX() function
  *          Removed some dbugging
+ *   0.9  : Corrected erroneous rollup while entering
+ *          Implemented f clearRegs()
+ *          Simplified F and G shift handling
+ *          Implemented f clear Prefix
  *------------------------------------------------------------------------- */
-#define progVersion "0.8"                     // Program version definition
+#define progVersion "0.9"                     // Program version definition
 /* ------------------------------------------------------------------------- *
  *             GNU LICENSE CONDITIONS
  * ------------------------------------------------------------------------- *
@@ -109,8 +113,6 @@
 #include <String.h>                     // String library
 
 #include <math.h>                       // Arduino math library
-
-#include <Keypad.h>                     // Keypad library
 
 #include <EEPROM.h>                     // EEPROM library to save settings
 
@@ -281,7 +283,7 @@ void bldNum(char c) {
   if (!numEntry) {                                // Starting number entry?
     numString = "";                               // Then clear buildup string
     numEntry = true;                              // Entering number = true
-    rollUp();                                     // Make place for new number
+//    rollUp();                                     // Make place for new number
     LCD_display(display, 2, 3, "                 " );
   }
   if (c == 'Z') {                                 // Backspace??
@@ -303,6 +305,7 @@ void bldNum(char c) {
  * ------------------------------------------------------------------------- */
 void endNum() {
   if (numEntry) {                                 // Check num entry was going on
+//    rollUp();                                     // Make place for new number
     stack[X] = numString.toDouble();              // If so, put num in X register
     showStack();                                  // Show new stack status
     numString = "";                               // clear num string for next time
@@ -378,7 +381,7 @@ void handleShiftF() {
     case 0x14: { /*   D   */              break; }
     case 0x15: { /*   E   */              break; }
     case 0x16: { /*MATRIX */              break; }
-    case 0x17: { endNum(); FIX();  clearShiftState();        break; }
+    case 0x17: { endNum(); FIX();         break; }
     case 0x18: { /* SCI   */              break; }
 
     case 0x21: { /* LBL   */              break; }
@@ -390,35 +393,36 @@ void handleShiftF() {
     case 0x27: { /* X><   */              break; }
     case 0x28: { /* DSE   */              break; }
 
-    case 0x31: { endNum(); PSE();         clearShiftState(); break; }
-    case 0x32: { endNum(); clearStats();  clearShiftState(); break; }
+    case 0x31: { endNum(); PSE();         break; }
+    case 0x32: { endNum(); clearStats();  break; }
     case 0x33: { /* CL PGM*/              break; }
-    case 0x34: { /* CL REG*/              break; }
-    case 0x35: { /* CL PFX*/              break; }
-    case 0x36: { endNum(); doRandom();    clearShiftState(); break; }
+    case 0x34: { endNum(); clearRegs();   break; }
+    case 0x35: { endNum(); clearShiftState();  break; }
+    case 0x36: { endNum(); doRandom();    break; }
     case 0x37: { /* => R  */              break; }
     case 0x38: { /* =>HMS */              break; }
 
     case 0x41: { /* ON    */              break; }
     case 0x42: { endNum(); makeShiftF();  break; }
     case 0x43: { endNum(); makeShiftG();  break; }
-    case 0x44: { endNum(); FRAC() ;       clearShiftState(); break; }
+    case 0x44: { endNum(); FRAC();        break; }
     case 0x45: { /* USER  */              break; }
-    case 0x46: { endNum(); doRandom();    clearShiftState(); break; }
-    case 0x47: { endNum(); FAC();         clearShiftState(); break; }
+    case 0x46: { endNum(); doRandom();    break; }
+    case 0x47: { endNum(); FAC();         break; }
     case 0x48: { /* Y,r   */              break; }
 
     case 0x51: { /* ENG  */               break; }
     case 0x52: { /* SOLVE*/               break; }
     case 0x53: { /* ISG  */               break; }
     case 0x54: { /* f XY */               break; }
-    case 0x55: { endNum(); toRAD();       clearShiftState(); break; }
+    case 0x55: { endNum(); toRAD();       break; }
     case 0x56: { /* Re Im*/               break; }
     case 0x57: { /* L.R. */               break; }
     case 0x58: { /* P x,y*/               break; }
 
     default: { break; }
   }
+  clearShiftState();
 }
 
 
@@ -428,53 +432,54 @@ void handleShiftF() {
 void handleShiftG() {
   switch (key) {
 
-    case 0x11: { endNum(); SQRT();        clearShiftState(); break; }
-    case 0x12: { endNum(); LOG();         clearShiftState(); break; }
-    case 0x13: { endNum(); LOG10();       clearShiftState(); break; }
-    case 0x14: { endNum(); PERCENT();     clearShiftState(); break; }
-    case 0x15: { endNum(); DIFPERC();     clearShiftState(); break; }
-    case 0x16: { endNum(); ABS();         clearShiftState(); break; }
-    case 0x17: { endNum(); DEG();         clearShiftState(); break; }
-    case 0x18: { endNum(); RAD();         clearShiftState(); break; }
+    case 0x11: { endNum(); SQRT();        break; }
+    case 0x12: { endNum(); LOG();         break; }
+    case 0x13: { endNum(); LOG10();       break; }
+    case 0x14: { endNum(); PERCENT();     break; }
+    case 0x15: { endNum(); DIFPERC();     break; }
+    case 0x16: { endNum(); ABS();         break; }
+    case 0x17: { endNum(); DEG();         break; }
+    case 0x18: { endNum(); RAD();         break; }
 
-    case 0x21: { /* BST   */                                 break; }
-    case 0x22: { /* HYP-1 */                                 break; }
-    case 0x23: { endNum(); ASIN();        clearShiftState(); break; }
-    case 0x24: { endNum(); ACOS();        clearShiftState(); break; }
-    case 0x25: { endNum(); ATAN();        clearShiftState(); break; }
-    case 0x26: { endNum(); push(PI);      clearShiftState(); break; }
-    case 0x27: { /* SF    */                                 break; }
-    case 0x28: { /* CF    */                                 break; }
+    case 0x21: { /* BST   */              break; }
+    case 0x22: { /* HYP-1 */              break; }
+    case 0x23: { endNum(); ASIN();        break; }
+    case 0x24: { endNum(); ACOS();        break; }
+    case 0x25: { endNum(); ATAN();        break; }
+    case 0x26: { endNum(); push(PI);      break; }
+    case 0x27: { /* SF    */              break; }
+    case 0x28: { /* CF    */              break; }
 
-    case 0x31: { /* P/R   */                                 break; }
-    case 0x32: { /* RTN   */                                 break; }
-    case 0x33: { endNum(); rollUp();      clearShiftState(); break; }
-    case 0x34: { /* RND   */                                 break; }
-    case 0x35: { endNum(); CLX();         clearShiftState(); break; }
-    case 0x36: { endNum(); lstX();        clearShiftState(); break; }
-    case 0x37: { /* => P  */                                 break; }
-    case 0x38: { /* => H  */                                 break; }
+    case 0x31: { /* P/R   */              break; }
+    case 0x32: { /* RTN   */              break; }
+    case 0x33: { endNum(); rollUp();      break; }
+    case 0x34: { /* RND   */              break; }
+    case 0x35: { endNum(); CLX();         break; }
+    case 0x36: { endNum(); lstX();        break; }
+    case 0x37: { /* => P  */              break; }
+    case 0x38: { /* => H  */              break; }
 
-    case 0x41: { /* ON    */                                 break; }
-    case 0x42: { endNum(); makeShiftF();    	               break; }
-    case 0x43: { endNum(); makeShiftG();                     break; }
-    case 0x44: { endNum(); doInt();       clearShiftState(); break; }
-    case 0x45: { /* MEM   */                                 break; }
-    case 0x46: { endNum(); lstX();                           break; }
-    case 0x47: { endNum(); meanValues();  clearShiftState(); break; }
-    case 0x48: { /* StdDev*/                                 break; }
+    case 0x41: { /* ON    */              break; }
+    case 0x42: { endNum(); makeShiftF();  break; }
+    case 0x43: { endNum(); makeShiftG();  break; }
+    case 0x44: { endNum(); doInt();       break; }
+    case 0x45: { /* MEM   */              break; }
+    case 0x46: { endNum(); lstX();        break; }
+    case 0x47: { endNum(); meanValues();  break; }
+    case 0x48: { /* StdDev*/              break; }
 
-    case 0x51: { endNum(); GRD();         clearShiftState(); break; }
-    case 0x52: { /* X<=Y  */                                 break; }
-    case 0x53: { /* F?    */                                 break; }
-    case 0x54: { /* x = 0 */                                 break; }
-    case 0x55: { endNum(); toDEG();       clearShiftState(); break; }
-    case 0x56: { /* TEST  */                                 break; }
-    case 0x57: { endNum(); sigmaMinus();  clearShiftState(); break; }
-    case 0x58: { /* C x,y */                                 break; }
+    case 0x51: { endNum(); GRD();         break; }
+    case 0x52: { /* X<=Y  */              break; }
+    case 0x53: { /* F?    */              break; }
+    case 0x54: { /* x = 0 */              break; }
+    case 0x55: { endNum(); toDEG();       break; }
+    case 0x56: { /* TEST  */              break; }
+    case 0x57: { endNum(); sigmaMinus();  break; }
+    case 0x58: { /* C x,y */              break; }
 
     default: { break; }
   }
+  clearShiftState();
 }
 
 
