@@ -26,10 +26,12 @@
  *   0.8  : Display improvement for FIX and exponent display
  *          Implemented EEX() function
  *          Removed some dbugging
- *   0.9  : Corrected erroneous rollup while entering
+ *   0.9  : Corrected erroneous stack rollup while entering numbers
  *          Implemented f clearRegs()
  *          Simplified F and G shift handling
  *          Implemented f clear Prefix
+ *          Repositioned shift state on display
+ *          Improved number display for FIX mode
  *------------------------------------------------------------------------- */
 #define progVersion "0.9"                     // Program version definition
 /* ------------------------------------------------------------------------- *
@@ -59,7 +61,7 @@
  * ------------------------------------------------------------------------- */
 // item		    startpos	  endpos    values
 // ----------	--------    ------    --------------------------------
-// shiftState     4          4      f, g
+// shiftState     7          7      f, g
 // displError     9         11      ovf
 // displState    13         15      fix, sci, eng
 // gonioState    17         19      rad, grd, deg
@@ -997,18 +999,18 @@ void rollUp() {                                   // Roll stack up
 void makeShiftF() {
 debugln("Making shift state F");
   stateShift = shiftF;
-  LCD_display(display, 3, 4, F("f") );
+  LCD_display(display, 3, 7, F("f") );
 }
 
 void makeShiftG() {
 debugln("Making shift state G");
   stateShift = shiftG;
-  LCD_display(display, 3, 4, F("g") );
+  LCD_display(display, 3, 7, F("g") );
 }
 
 void clearShiftState() {
   stateShift = noShift;
-  LCD_display(display, 3, 4, F(" ") );
+  LCD_display(display, 3, 7, F(" ") );
 }
 
 
@@ -1030,13 +1032,13 @@ void showStack() {
   myString = "Y: ";
 //  myString.concat(String(stack[Y], precision));
   myString.concat( numMakeup(stack[Y]) );
-  myString.concat(F("                    "));
+  myString.concat(F("                  "));
   LCD_display(display, 1, 0, myString.substring(0,20) );
 
   myString = "X: ";
 //  myString.concat(String(stack[X], precision));
   myString.concat( numMakeup(stack[X]) );
-  myString.concat(F("                    "));
+  myString.concat(F("                  "));
   LCD_display(display, 2, 0, myString.substring(0,20) );
 }
 
@@ -1074,7 +1076,7 @@ debug(" newNum = "); debugln(String(newNum,9));
       else if (expn < (-9.0) ) 
       {
 
-         newNum = (double)( n * pow(10.0, (expn) ) );
+         newNum = (double)( n * pow(10.0, abs(expn) ) );
 debug(" newNum = "); debugln(String(newNum,9));
          numString.concat( String(newNum, precision) );
          numString.concat( F("             "));
