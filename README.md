@@ -12,6 +12,10 @@
 
  <img src="./gfx/GAW-RPN-Calculator-pic01.jpg" width="600">
 
+ And here is the prototype based on the print of my own design:
+
+ <img src="./gfx/Prototype1.0.jpg" width="600">
+
 
 ## Software
  In the setup routine there's a place called 'TEST AREA' in the comments surrounding it.

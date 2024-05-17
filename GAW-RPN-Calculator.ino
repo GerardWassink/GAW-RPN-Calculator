@@ -32,8 +32,13 @@
  *          Implemented f clear Prefix
  *          Repositioned shift state on display
  *          Improved number display for FIX mode
+ *   1.0  : Release
+ *          debugging off
+ *          Code cleanup
+ *          Added pictures
+ *          Changed README
  *------------------------------------------------------------------------- */
-#define progVersion "0.9"                     // Program version definition
+#define progVersion "1.0"                     // Program version definition
 /* ------------------------------------------------------------------------- *
  *             GNU LICENSE CONDITIONS
  * ------------------------------------------------------------------------- *
@@ -72,7 +77,7 @@
  * Compiler directives to switch debugging on / off
  * Do not enable debug when not needed, Serial takes space and time!
  * ------------------------------------------------------------------------- */
-#define DEBUG 1
+#define DEBUG 0
 
 #if DEBUG == 1
   #define debugstart(x) Serial.begin(x)
@@ -129,11 +134,9 @@ LiquidCrystal_I2C display(0x25,20,4);   // Instantiate display object
  * ------------------------------------------------------------------------- */
 int precision = 9;                      // default precision = 9
 
-unsigned int gonioStatus = statDEG;     // Gonio default to degrees
-
-unsigned int stateShift=noShift;        // shift default to 0 (off)
-
-unsigned int dispState=dispFix;         // shift default to 0 (off)
+unsigned int gonioState = statDEG;      // Gonio default to degrees
+unsigned int shiftState = noShift;      // shift default to 0 (off)
+unsigned int dispState  = dispFix;      // shift default to 0 (off)
 
 String numString = "";                  // String to build number in
 bool numEntry = false;                  // Number entry state
@@ -202,17 +205,17 @@ void setup() {
   //                                              Intro Screen
   // Assemble and show intro text and version
   //
-  LCD_display(display, 0, 0, "GAW RPN calculator  ");
-  String myString = "version ";
+  LCD_display(display, 0, 0, F("GAW RPN calculator  "));
+  String myString = F("version ");
   myString.concat(progVersion);
   myString.concat("          ");
   LCD_display(display, 1,  0, myString.substring(0,20) );
-  LCD_display(display, 2,  0, "by Gerard Wassink" );
-  LCD_display(display, 3,  0, "GNU license v3" );
+  LCD_display(display, 2,  0, F("(c) Gerard Wassink  ") );
+  LCD_display(display, 3,  0, F("GNU license v3      ") );
 
   delay(3000);
 
-  myString = "RPN calculator ";                   // headline
+  myString = F("RPN calculator ");                // headline
   myString.concat(progVersion);
   LCD_display(display, 0, 0, myString);
                                                   // clear bottom line
@@ -251,14 +254,8 @@ void loop() {
   {
     LCD_display(display, 3,  9, "   ");           // Clear ovf if we had one
 
-#if DEBUG == 1
-  String showchar="";                           // Serial show
-  showchar = String(key, HEX);                  //  keypress for
-  debugln(showchar + " - key pressed");         //   debugging purposes
-#endif
-
-    switch (stateShift)                             // Determine shift state
-    {                                               //  and handle keys accordingly
+    switch (shiftState)                           // Determine shift state
+    {                                             //  and handle keys accordingly
       case noShift: { handleNoShift(); break; }
 
       case shiftF:  { handleShiftF();  break; }
@@ -268,8 +265,8 @@ void loop() {
       default: { break; }
     }
 
-    if (!numEntry) {                                // No number entry in progress
-      showStack();                                  //  then show current stack
+    if (!numEntry) {                              // No number entry in progress
+      showStack();                                //  then show current stack
     }
 
   }
@@ -285,9 +282,9 @@ void bldNum(char c) {
   if (!numEntry) {                                // Starting number entry?
     numString = "";                               // Then clear buildup string
     numEntry = true;                              // Entering number = true
-//    rollUp();                                     // Make place for new number
     LCD_display(display, 2, 3, "                 " );
   }
+
   if (c == 'Z') {                                 // Backspace??
     int l = numString.length();                   // Determine lenght of string
     numString = numString.substring(0,l-1);       // Remove last character
@@ -307,7 +304,6 @@ void bldNum(char c) {
  * ------------------------------------------------------------------------- */
 void endNum() {
   if (numEntry) {                                 // Check num entry was going on
-//    rollUp();                                     // Make place for new number
     stack[X] = numString.toDouble();              // If so, put num in X register
     showStack();                                  // Show new stack status
     numString = "";                               // clear num string for next time
@@ -537,10 +533,13 @@ void doInt() {                                    // x = int(x)
 }
 
 void SQRT() { saveLastX(); stack[X] = sqrt(stack[X]); }     // Square root
+
 void SQ()   { saveLastX(); stack[X] = sq(stack[X]); }       // Square
 
 void OneOverX() { saveLastX(); stack[X] = 1 / stack[X]; }   // 1 / X
+
 void CHS() { saveLastX(); stack[X] = -1 * stack[X]; }       // Change Sign
+
 void ABS() { saveLastX(); stack[X] = abs(stack[X]); }       // Absolute value
 
 void POW() {                                      // Y to the power of X
@@ -614,7 +613,7 @@ void toDEG() {                                    // convert Radians to degrees
 
 void SIN() {                                      // Sine
   saveLastX(); 
-  switch (gonioStatus) {
+  switch (gonioState) {
     case statDEG:
       stack[X] = sin(stack[X]*2*PI/360);          // Degrees to radians
       break;
@@ -631,7 +630,7 @@ void SIN() {                                      // Sine
 
 void ASIN() {                                     // Arc Sine
   saveLastX(); 
-  switch (gonioStatus) {
+  switch (gonioState) {
     case statDEG:
       stack[X] = asin(stack[X])*360/(2*PI);       // Radians to Degrees
       break;
@@ -648,7 +647,7 @@ void ASIN() {                                     // Arc Sine
 
 void COS() {                                      // Cosine
   saveLastX(); 
-  switch (gonioStatus) {
+  switch (gonioState) {
     case statDEG:
       stack[X] = cos(stack[X]*2*PI/360);          // Degrees to radians
       break;
@@ -665,7 +664,7 @@ void COS() {                                      // Cosine
 
 void ACOS() {                                     // Arc Cosine
   saveLastX(); 
-  switch (gonioStatus) {
+  switch (gonioState) {
     case statDEG:
       stack[X] = acos(stack[X])*360/(2*PI);       // Radians to Degrees
       break;
@@ -682,7 +681,7 @@ void ACOS() {                                     // Arc Cosine
 
 void TAN() {                                      // Tangent
   saveLastX(); 
-  switch (gonioStatus) {
+  switch (gonioState) {
     case statDEG:
       stack[X] = tan(stack[X]*2*PI/360);          // Degrees to radians
       break;
@@ -699,7 +698,7 @@ void TAN() {                                      // Tangent
 
 void ATAN() {                                     // Arc Tangent
   saveLastX(); 
-  switch (gonioStatus) {
+  switch (gonioState) {
     case statDEG:
       stack[X] = atan(stack[X])*360/(2*PI);       // Radians to Degrees
       break;
@@ -772,7 +771,7 @@ void PSE() {                                      // Pause program 1 second
 /* ------------------------------------------------------------------------- *
  *                                                      Calculator functions
  * ------------------------------------------------------------------------- */
-void clearRegs() {                                 // Clear registters
+void clearRegs() {                                // Clear registters
   for (int i=0; i<30; i++) {
     Reg[i] = 0;
   }
@@ -951,17 +950,17 @@ int getReg() {                                    // get Register
 //                                                --------------------------
 
 void DEG() {                                      // Status to Degrees
-  gonioStatus = statDEG; 
+  gonioState = statDEG; 
   LCD_display(display, 3,17, F("deg") );
 }
 
 void RAD() {                                      // Status to Radians
-  gonioStatus = statRAD; 
+  gonioState = statRAD; 
   LCD_display(display, 3,17, F("rad") );
 }
 
 void GRD() {                                      // Status to Gradians
-  gonioStatus = statGRD; 
+  gonioState = statGRD; 
   LCD_display(display, 3,17, F("grd") );
 }
 
@@ -998,18 +997,18 @@ void rollUp() {                                   // Roll stack up
  * ------------------------------------------------------------------------- */
 void makeShiftF() {
 debugln("Making shift state F");
-  stateShift = shiftF;
+  shiftState = shiftF;
   LCD_display(display, 3, 7, F("f") );
 }
 
 void makeShiftG() {
 debugln("Making shift state G");
-  stateShift = shiftG;
+  shiftState = shiftG;
   LCD_display(display, 3, 7, F("g") );
 }
 
 void clearShiftState() {
-  stateShift = noShift;
+  shiftState = noShift;
   LCD_display(display, 3, 7, F(" ") );
 }
 
