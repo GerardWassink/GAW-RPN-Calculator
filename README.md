@@ -37,6 +37,18 @@
  The ones that are coded already are actually being called.
  Those that are not coded yet have comments with their name / function.
 
+### Completeness?
+ The HP15 calculator functions have been implemented, except for the ones below.
+ Who knows, perhaps in the future.
+- All programming capabilities
+- SOLVE functionality
+- alphanumeric entry for registernumbers (A, B, ... .A, .B ....)
+- MATRIX functionality
+- SCI and ENG notations
+- HYP and HYP-1 functions
+- I and (i) register handling
+- Polar / rectangular conversions
+- Hour, minute, seconds / decimal conversions
 
 ## Functions
  The functions that have been coded and bound to their respective keys are listed here.
@@ -54,6 +66,7 @@
 - SQ()            // Square
 - POW()           // Y to the power of X
 - PERCENT()       // Take X perecnt of Y
+- DIFPERCENT()    // Percent difference
 - OneOverX()      // 1 / X
 - CHS()           // Change Sign
 - ABS()           // Absolute value
@@ -78,6 +91,7 @@
 - ATAN()          // Arctangent of X
 - toRAD()         // degrees to radians
 - toDEG()         // radians to degrees
+- PI()			  // Give value of PI
 
 ### Statistics
 
@@ -88,10 +102,12 @@
 
 ### Calculator
 
-- clearReg()      // Clear all 30 registers
+- clearRegs()     // Clear all 30 registers
+- clearShiftState() // Clear f or g state
 - STO()           // Store value in register
 - RCL()           // Recall value from register
 - CLX()           // Clear X register
+- lstX()          // Recall last value of X
 - FIX()           // Set precision (default 4)
 - swapXY()        // Exchange values of X and Y
 - push()          // Push number on stack
