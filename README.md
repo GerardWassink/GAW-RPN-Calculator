@@ -1,6 +1,6 @@
 # GAW-RPN-Calculator
  HP like RPN calculator on Arduino, loosely based on the HP-15C. 
- It has no programming capabilities yet, perhaps that will come in a future expansion.
+ It has no programming capabilities yet, perhaps in a future expansion.
 
 
 ## Hardware
@@ -40,7 +40,7 @@
 ### Completeness?
  The HP15 calculator functions have been implemented, except for the ones below.
  Who knows, perhaps in the future.
-- All programming capabilities
+- Programming capabilities
 - SOLVE functionality
 - alphanumeric entry for registernumbers (A, B, ... .A, .B ....)
 - MATRIX functionality
@@ -50,7 +50,7 @@
 - Polar / rectangular conversions
 - Hour, minute, seconds / decimal conversions
 
-## Functions
+## Implemented functions
  The functions that have been coded and bound to their respective keys are listed here.
 
 ### Logaritmic
@@ -95,10 +95,15 @@
 
 ### Statistics
 
-- clearStats()    // Clear statistic registers
-- sigmaPlus()     // Accumulate datapoints
-- sigmaMinus()    // Correct datapoints
-
+- clearStats()    // Clear statistic registers f Clear E
+- sigmaPlus()     // Accumulate datapoints E+
+- sigmaMinus()    // Correct datapoints E-
+- meanValues()    // Calculate mean values
+- stdDev()        // Calculate standard deviation s
+- linRegr()       // Linear Regression L.R.
+- linEstim()      // Linear Estimation f ^y,r
+- permu()         // Permutations Py,x
+- combi()         // Combinations Cy,x
 
 ### Calculator
 
