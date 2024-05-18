@@ -1,7 +1,7 @@
 /* ------------------------------------------------------------------------- *
  * Name   : GAW-RPN-Calculator
  * Author : Gerard Wassink
- * Date   : March 2024
+ * Date   : May 2024
  * Purpose: Generate keyboard commands
  * Versions:
  *   0.1  : Initial code base
@@ -37,8 +37,13 @@
  *          Code cleanup
  *          Added pictures
  *          Changed README
+ *   1.0.1: Added standard deviation function
+ *          Added linear regression function L.R.
+ *          Added linear estimation function ^y,r
+ *          Added Permutation function Py,x
+ *          Added Combination function Cy,x
  *------------------------------------------------------------------------- */
-#define progVersion "1.0"                     // Program version definition
+#define progVersion "1.0.1"                   // Program version definition
 /* ------------------------------------------------------------------------- *
  *             GNU LICENSE CONDITIONS
  * ------------------------------------------------------------------------- *
@@ -57,7 +62,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  * ------------------------------------------------------------------------- *
- *       Copyright (C) March 2024 Gerard Wassink
+ *       Copyright (C) May 2024 Gerard Wassink
  * ------------------------------------------------------------------------- */
 
 
@@ -143,6 +148,16 @@ bool numEntry = false;                  // Number entry state
 
 double E = 2.718281828459045;           // constant for the natural number
 
+/* ------------------------------------------------------------------------- *
+ *                                                      Statistics registers
+ * Containing:
+ * statRegLo + 0 = n    number of values
+ * statRegLo + 1 = Ex   sum of x values
+ * statRegLo + 2 = Ex2  sum of squared x values
+ * statRegLo + 3 = Ey   sum of y values
+ * statRegLo + 4 = Ey2  sum of squared y values
+ * statRegLo + 5 = Exy  sum of products of x and y values
+ * ------------------------------------------------------------------------- */
 int statRegLo = 2;                      // Lo register for statistics
 int statRegHi = 7;                      // Hi register for statistics
 
@@ -407,7 +422,7 @@ void handleShiftF() {
     case 0x45: { /* USER  */              break; }
     case 0x46: { endNum(); doRandom();    break; }
     case 0x47: { endNum(); FAC();         break; }
-    case 0x48: { /* Y,r   */              break; }
+    case 0x48: { endNum(); linEstim();    break; }
 
     case 0x51: { /* ENG  */               break; }
     case 0x52: { /* SOLVE*/               break; }
@@ -415,8 +430,8 @@ void handleShiftF() {
     case 0x54: { /* f XY */               break; }
     case 0x55: { endNum(); toRAD();       break; }
     case 0x56: { /* Re Im*/               break; }
-    case 0x57: { /* L.R. */               break; }
-    case 0x58: { /* P x,y*/               break; }
+    case 0x57: { endNum(); linRegr();     break; }
+    case 0x58: { endNum(); permu();       break; }
 
     default: { break; }
   }
@@ -464,7 +479,7 @@ void handleShiftG() {
     case 0x45: { /* MEM   */              break; }
     case 0x46: { endNum(); lstX();        break; }
     case 0x47: { endNum(); meanValues();  break; }
-    case 0x48: { /* StdDev*/              break; }
+    case 0x48: { endNum(); stdDev();      break; }
 
     case 0x51: { endNum(); GRD();         break; }
     case 0x52: { /* X<=Y  */              break; }
@@ -473,7 +488,8 @@ void handleShiftG() {
     case 0x55: { endNum(); toDEG();       break; }
     case 0x56: { /* TEST  */              break; }
     case 0x57: { endNum(); sigmaMinus();  break; }
-    case 0x58: { /* C x,y */              break; }
+    case 0x58: { endNum(); combi();       break; }
+
 
     default: { break; }
   }
@@ -586,17 +602,24 @@ void twoNums(double temp) {
 void FAC()  {                                     // Factorial
   saveLastX(); 
   double x = int(stack[X]);
+  double f = factorial(x);
   if (x <=170) {                                  // Check overflow
-    double r = 1;
-    for (double i=2; i<=x; i++) {
-      r = r * i; 
-    }
-    stack[X] = r;
-  } else {
-    LCD_display(display, 3, 9, "ovf");
+    stack[X] = f;
   }
 }
 
+double factorial(double f) {
+  double r = 1;
+  if (f <=170) {                                  // Check overflow
+    for (double i=2; i<=f; i++) {
+      r = r * i; 
+    }
+  } else {
+    LCD_display(display, 3, 9, "ovf");
+    r = 0;
+  }
+  return(r);
+}
 
 /* ------------------------------------------------------------------------- *
  *                                                     Goniometric functions
@@ -753,10 +776,69 @@ void sigmaMinus() {
   stack[X] = (double)Reg[statRegLo];
 }
 
-void meanValues() {
+void meanValues() {                               // Calculate mean
   saveLastX(); 
   push( Reg[statRegLo+3] / Reg[statRegLo] );
   push( Reg[statRegLo+1] / Reg[statRegLo] );
+}
+
+void stdDev() {                                   // Standard deviation
+  double n = Reg[statRegLo];                      // n = number of entries
+
+  double M = ( n * Reg[statRegLo+2] ) - ( Reg[statRegLo + 1] * Reg[statRegLo + 1] ); // M = nEx2 - (Ex)2
+  double N = ( n * Reg[statRegLo+4] ) - ( Reg[statRegLo + 3] * Reg[statRegLo + 3] ); // N = nEy2 - (Ey)2
+
+  double sX = sqrt( M / ( n * ( n - 1 ) ) );      // sX = SQR( M / n(n-1) )
+  double sY = sqrt( N / ( n * ( n - 1 ) ) );      // sY = SQR( N / n(n-1) )
+
+  push(sY);                                       // push them on the stack
+  push(sX);
+}
+
+void linRegr() {                                  // Linear Regression
+  double n = Reg[statRegLo];                      // n = number of entries
+
+  double M = ( n * Reg[statRegLo+2] ) - ( Reg[statRegLo + 1] * Reg[statRegLo + 1] ); // M = nEx2 - (Ex)2
+  double N = ( n * Reg[statRegLo+4] ) - ( Reg[statRegLo + 3] * Reg[statRegLo + 3] ); // N = nEy2 - (Ey)2
+  double P = ( n * Reg[statRegLo+5] ) - ( Reg[statRegLo + 1] * Reg[statRegLo + 3] ); // P = nExy - ExEy
+
+  double A = P / M;
+  double B = ( ( ( M * Reg[statRegLo+3] ) - ( P *  Reg[statRegLo+1] ) ) / ( n * M ) );
+
+  push(A);                                       // push them on the stack
+  push(B);
+}
+
+void linEstim() {                                  // Linear Estimation of X
+  double n = Reg[statRegLo];                      // n = number of entries
+
+  double M = ( n * Reg[statRegLo+2] ) - ( Reg[statRegLo + 1] * Reg[statRegLo + 1] ); // M = nEx2 - (Ex)2
+  double N = ( n * Reg[statRegLo+4] ) - ( Reg[statRegLo + 3] * Reg[statRegLo + 3] ); // N = nEy2 - (Ey)2
+  double P = ( n * Reg[statRegLo+5] ) - ( Reg[statRegLo + 1] * Reg[statRegLo + 3] ); // P = nExy - ExEy
+
+  double r = P / sqrt(M * N);
+  double yVal = ( ( M * Reg[statRegLo+3] ) + (P * ( n * stack[X] - Reg[statRegLo+1] ) ) )
+                / 
+                (  n * M );
+
+  push(r);                                       // push them on the stack
+  push(yVal);
+}
+
+void permu() {                                   // Permutions Py,x
+  double x = stack[X];
+  double y = stack[Y];
+  double Pxy = factorial(y) / factorial(y - x);
+  rollDown();
+  stack[X] = Pxy;
+}
+
+void combi() {                                   // Combinations Cy,x
+  double x = stack[X];
+  double y = stack[Y];
+  double Cxy = factorial(y) / ( factorial(x) * factorial(y - x) );
+  rollDown();
+  stack[X] = Cxy;
 }
 
 
