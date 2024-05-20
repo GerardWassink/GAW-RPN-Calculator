@@ -91,7 +91,9 @@
 - ATAN()          // Arctangent of X
 - toRAD()         // degrees to radians
 - toDEG()         // radians to degrees
-- PI()			  // Give value of PI
+- PI()		        // Give value of PI
+- toRectlr        // Polar to Rectangular
+- toPolar         // Rectangular to Polar
 
 ### Statistics
 

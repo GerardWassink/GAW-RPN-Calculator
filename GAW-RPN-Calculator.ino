@@ -32,18 +32,23 @@
  *          Implemented f clear Prefix
  *          Repositioned shift state on display
  *          Improved number display for FIX mode
+ *
  *   1.0  : Release
  *          debugging off
  *          Code cleanup
  *          Added pictures
  *          Changed README
+ *
  *   1.0.1: Added standard deviation function
  *          Added linear regression function L.R.
  *          Added linear estimation function ^y,r
  *          Added Permutation function Py,x
  *          Added Combination function Cy,x
+ *   1.0.2: Code cleanup
+ *          Added Rectangular to Polar =>P
+ *          Added Polar to Rectangular =>R
  *------------------------------------------------------------------------- */
-#define progVersion "1.0.1"                   // Program version definition
+#define progVersion "1.0.2"                   // Program version definition
 /* ------------------------------------------------------------------------- *
  *             GNU LICENSE CONDITIONS
  * ------------------------------------------------------------------------- *
@@ -67,7 +72,7 @@
 
 
 /* ------------------------------------------------------------------------- *
- *                                		  Positioning of onscreen annunciators
+ *                   Positioning of onscreen annunciators on the bottom line
  * ------------------------------------------------------------------------- */
 // item		    startpos	  endpos    values
 // ----------	--------    ------    --------------------------------
@@ -126,10 +131,9 @@
 
 #include <math.h>                       // Arduino math library
 
-#include <EEPROM.h>                     // EEPROM library to save settings
 
 /* ------------------------------------------------------------------------- *
- *                                                            Create objects
+ *                                                     Create Display object
  * ------------------------------------------------------------------------- */
 LiquidCrystal_I2C display(0x25,20,4);   // Instantiate display object
 
@@ -143,10 +147,11 @@ unsigned int gonioState = statDEG;      // Gonio default to degrees
 unsigned int shiftState = noShift;      // shift default to 0 (off)
 unsigned int dispState  = dispFix;      // shift default to 0 (off)
 
-String numString = "";                  // String to build number in
+String numString = "";                  // String to build number
 bool numEntry = false;                  // Number entry state
 
 double E = 2.718281828459045;           // constant for the natural number
+
 
 /* ------------------------------------------------------------------------- *
  *                                                      Statistics registers
@@ -161,13 +166,14 @@ double E = 2.718281828459045;           // constant for the natural number
 int statRegLo = 2;                      // Lo register for statistics
 int statRegHi = 7;                      // Hi register for statistics
 
+
 /* ------------------------------------------------------------------------- *
  *                                             Stack variables X, Y, Z and T
  * ------------------------------------------------------------------------- */
 double stack[4] = {0, 0, 0, 0}; 
 int X=0, Y=1, Z=2, T=3;
-
 double lastX = 0;
+
 
 /* ------------------------------------------------------------------------- *
  *                                                Storage register variables
@@ -178,6 +184,7 @@ double lastX = 0;
  *   .A-.E,   25 - 29
  * ------------------------------------------------------------------------- */
 double Reg[30];
+
 
 /* ------------------------------------------------------------------------- *
  *                                                       Define keypad codes
@@ -202,6 +209,7 @@ double Reg[30];
  * ------------------------------------------------------------------------- */
   Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
+
 /* ------------------------------------------------------------------------- *
  *                                                           Global keypress
  * ------------------------------------------------------------------------- */
@@ -211,7 +219,8 @@ double Reg[30];
 /* ------------------------------------------------------------------------- *
  *                                                                   setup()
  * ------------------------------------------------------------------------- */
-void setup() {
+void setup() 
+{
   debugstart(115200);
 
   display.init();                                 // Initialize display
@@ -234,7 +243,7 @@ void setup() {
   myString.concat(progVersion);
   LCD_display(display, 0, 0, myString);
                                                   // clear bottom line
-  LCD_display(display, 3,  0, "                    " );
+  LCD_display(display, 3, 0, F("                    ") );
   LCD_display(display, 3,13, F("fix") );          // assuming fix as default
 
 
@@ -280,7 +289,8 @@ void loop() {
       default: { break; }
     }
 
-    if (!numEntry) {                              // No number entry in progress
+    if (!numEntry)                                // No number entry in progress
+    {
       showStack();                                //  then show current stack
     }
 
@@ -293,17 +303,22 @@ void loop() {
 /* ------------------------------------------------------------------------- *
  *                                                    Build up numeric entry
  * ------------------------------------------------------------------------- */
-void bldNum(char c) {
-  if (!numEntry) {                                // Starting number entry?
+void bldNum(char c) 
+{
+  if (!numEntry) 
+  {                                // Starting number entry?
     numString = "";                               // Then clear buildup string
     numEntry = true;                              // Entering number = true
     LCD_display(display, 2, 3, "                 " );
   }
 
-  if (c == 'Z') {                                 // Backspace??
+  if (c == 'Z') 
+  {                                 // Backspace??
     int l = numString.length();                   // Determine lenght of string
     numString = numString.substring(0,l-1);       // Remove last character
-  } else {
+  } 
+    else 
+  {
     numString.concat(c);                          // Concatenate number
   }
                                                   // Display number so far
@@ -317,8 +332,10 @@ void bldNum(char c) {
  * Convert string to double
  * Store number in X register
  * ------------------------------------------------------------------------- */
-void endNum() {
-  if (numEntry) {                                 // Check num entry was going on
+void endNum() 
+{
+  if (numEntry) 
+  {                                 // Check num entry was going on
     stack[X] = numString.toDouble();              // If so, put num in X register
     showStack();                                  // Show new stack status
     numString = "";                               // clear num string for next time
@@ -330,8 +347,10 @@ void endNum() {
 /* ------------------------------------------------------------------------- *
  *                                              Handle keys in noShift state
  * ------------------------------------------------------------------------- */
-void handleNoShift() {
-  switch (key) {
+void handleNoShift() 
+{
+  switch (key) 
+  {
     case 0x11: { endNum(); SQRT();        break; }
     case 0x12: { endNum(); EtoX();        break; }
     case 0x13: { endNum(); TENtoX();      break; }
@@ -385,8 +404,10 @@ void handleNoShift() {
 /* ------------------------------------------------------------------------- *
  *                                              Handle keys in shiftF state
  * ------------------------------------------------------------------------- */
-void handleShiftF() {
-  switch (key) {
+void handleShiftF() 
+{
+  switch (key) 
+  {
 
     case 0x11: { /*   A   */              break; }
     case 0x12: { /*   B   */              break; }
@@ -412,7 +433,7 @@ void handleShiftF() {
     case 0x34: { endNum(); clearRegs();   break; }
     case 0x35: { endNum(); clearShiftState();  break; }
     case 0x36: { endNum(); doRandom();    break; }
-    case 0x37: { /* => R  */              break; }
+    case 0x37: { endNum(); toRectlr();    break; }
     case 0x38: { /* =>HMS */              break; }
 
     case 0x41: { /* ON    */              break; }
@@ -442,8 +463,10 @@ void handleShiftF() {
 /* ------------------------------------------------------------------------- *
  *                                              Handle keys in shiftF state
  * ------------------------------------------------------------------------- */
-void handleShiftG() {
-  switch (key) {
+void handleShiftG() 
+{
+  switch (key) 
+  {
 
     case 0x11: { endNum(); SQRT();        break; }
     case 0x12: { endNum(); LOG();         break; }
@@ -469,7 +492,7 @@ void handleShiftG() {
     case 0x34: { /* RND   */              break; }
     case 0x35: { endNum(); CLX();         break; }
     case 0x36: { endNum(); lstX();        break; }
-    case 0x37: { /* => P  */              break; }
+    case 0x37: { endNum(); toPolar();     break; }
     case 0x38: { /* => H  */              break; }
 
     case 0x41: { /* ON    */              break; }
@@ -500,7 +523,8 @@ void handleShiftG() {
 /* ------------------------------------------------------------------------- *
  *                                                          Handle Enter key
  * ------------------------------------------------------------------------- */
-void doEnter() {
+void doEnter() 
+{
   rollUp();
   stack[X] = stack[Y];
 }
@@ -532,89 +556,126 @@ void EtoX()   { saveLastX(); stack[X] = pow(E, stack[X]); }    // e TO THE POWER
 /* ------------------------------------------------------------------------- *
  *                                                      Algebraicic functions
  * ------------------------------------------------------------------------- */
-void doRandom() {                                 // Random Number
+void doRandom() 
+{                                                 // Random Number
   saveLastX(); 
   randomSeed(analogRead(A7));
   push( (double)random(2147483647) / 2147483647 );
 }
 
-void FRAC() {                                    // x = int(x)
+void FRAC() 
+{                                                 // x = x - int(x)
   saveLastX(); 
   stack[X] = stack[X] - int(stack[X]);
 }
 
-void doInt() {                                    // x = int(x)
+void doInt() 
+{                                                 // x = int(x)
   saveLastX(); 
   stack[X] = int(stack[X]);
 }
 
-void SQRT() { saveLastX(); stack[X] = sqrt(stack[X]); }     // Square root
+                                                  // Square root
+void SQRT() { saveLastX(); stack[X] = sqrt(stack[X]); }
 
-void SQ()   { saveLastX(); stack[X] = sq(stack[X]); }       // Square
 
-void OneOverX() { saveLastX(); stack[X] = 1 / stack[X]; }   // 1 / X
+                                                  // Square
+void SQ()   { saveLastX(); stack[X] = sq(stack[X]); }
 
-void CHS() { saveLastX(); stack[X] = -1 * stack[X]; }       // Change Sign
 
-void ABS() { saveLastX(); stack[X] = abs(stack[X]); }       // Absolute value
+                                                  // 1 / X
+void OneOverX() { saveLastX(); stack[X] = 1 / stack[X]; }
 
-void POW() {                                      // Y to the power of X
+
+                                                  // Change Sign
+void CHS() { saveLastX(); stack[X] = -1 * stack[X]; }
+
+
+                                                  // Absolute value
+void ABS() { saveLastX(); stack[X] = abs(stack[X]); }
+
+
+void POW()                                        // Y to the power of X
+{
   saveLastX(); 
   twoNums( pow(stack[Y], stack[X]));
 }
 
-void PERCENT() {                                  // Take X percent of Y
+
+void PERCENT()                                    // Take X percent of Y
+{
   saveLastX(); 
   stack[X] = stack[Y] * stack[X] / 100;
 }
 
-void DIFPERC() {                                  // Take delta X percent of Y
+
+void DIFPERC()                                    // Take delta X percent of Y
+{
   saveLastX(); 
   stack[X] = ( stack[X] - stack[Y] ) *100 / stack[Y];
 }
 
-void ADD()  {                                     // Add
+
+void ADD()                                        // Add
+{
   saveLastX(); 
   twoNums( stack[Y] + stack[X] );
 }
 
-void SUBTRACT()  {                                // Subtract
+
+void SUBTRACT()                                   // Subtract
+{
   saveLastX(); 
   twoNums( stack[Y] - stack[X] );
 }
 
-void MULTIPLY()  {                                // Multiply
+
+void MULTIPLY()                                   // Multiply
+{
   saveLastX(); 
   twoNums( stack[Y] * stack[X] );
 }
 
-void DIVIDE()  {                                  // Divide
+
+void DIVIDE()                                     // Divide
+{
   saveLastX(); 
   twoNums( stack[Y] / stack[X] );
 }
 
-void twoNums(double temp) {
+
+void twoNums(double temp) 
+{
   stack[X] = stack[T];
   rollDown();
   stack[X] = temp;
 }
 
-void FAC()  {                                     // Factorial
+
+void FAC()                                        // Factorial
+{
   saveLastX(); 
   double x = int(stack[X]);
   double f = factorial(x);
-  if (x <=170) {                                  // Check overflow
+  if (x <=170)                                    // Check overflow
+  {
     stack[X] = f;
   }
 }
 
-double factorial(double f) {
+
+double factorial(double f) 
+{
   double r = 1;
-  if (f <=170) {                                  // Check overflow
-    for (double i=2; i<=f; i++) {
+  if (f <=170)                                    // Check overflow
+  {
+    for (double i=2; i<=f; i++) 
+    {
       r = r * i; 
     }
-  } else {
+  }
+    else 
+  {
     LCD_display(display, 3, 9, "ovf");
     r = 0;
   }
@@ -624,19 +685,72 @@ double factorial(double f) {
 /* ------------------------------------------------------------------------- *
  *                                                     Goniometric functions
  * ------------------------------------------------------------------------- */
-void toRAD() {                                    // convert degrees to Radians
+void toRAD()                                      // convert degrees to Radians
+{
   saveLastX(); 
   stack[X] = stack[X]*2*PI/360;
 }
 
-void toDEG() {                                    // convert Radians to degrees
+
+void toDEG()                                      // convert Radians to degrees
+{
   saveLastX(); 
   stack[X] = stack[X]*360/(2*PI);
 }
 
-void SIN() {                                      // Sine
-  saveLastX(); 
-  switch (gonioState) {
+
+void toRectlr()                                   // Polar to Rectangular
+{
+  double rho = stack[Y];
+  double r   = stack[X];
+  switch (gonioState) 
+  {
+    case statDEG:
+      stack[Y] = r*sin(rho*2*PI/360);             // Degrees to radians
+      stack[X] = r*cos(rho*2*PI/360);             // Degrees to radians
+      break;
+    case statGRD:
+      stack[Y] = r*sin(rho*2*PI/400);             // Gradians to radians
+      stack[X] = r*cos(rho*2*PI/400);             // Gradians to radians
+      break;
+    case statRAD:
+      stack[X] = r*sin(rho);
+      stack[X] = r*cos(rho);
+      break;
+    default:
+      break;
+  }
+}
+
+
+void toPolar()                                    // Rectangular to Polar
+{
+  double y = stack[Y];
+  double x = stack[X];
+  switch (gonioState) 
+  {
+    case statDEG:
+      stack[Y] = atan(y/x) * 360 / (2*PI);        // rho in degrees
+      stack[X] = sqrt(x*x + y*y);                 // r, Pythagoras
+      break;
+    case statGRD:
+      stack[Y] = atan(y/x) * 400 / (2*PI);        // rho in gradians
+      stack[X] = sqrt(x*x + y*y);                 // r, Pythagoras
+      break;
+    case statRAD:
+      stack[Y] = atan(y/x);                       // rho in radians
+      stack[X] = sqrt(x*x + y*y);                 // r, Pythagoras
+      break;
+    default:
+      break;
+  }
+}
+
+
+void SIN()                                        // Sine
+{ saveLastX(); 
+  switch (gonioState) 
+  {
     case statDEG:
       stack[X] = sin(stack[X]*2*PI/360);          // Degrees to radians
       break;
@@ -651,9 +765,12 @@ void SIN() {                                      // Sine
   }
 }
 
-void ASIN() {                                     // Arc Sine
+
+void ASIN()                                       // Arc Sine
+{
   saveLastX(); 
-  switch (gonioState) {
+  switch (gonioState) 
+  {
     case statDEG:
       stack[X] = asin(stack[X])*360/(2*PI);       // Radians to Degrees
       break;
@@ -668,9 +785,12 @@ void ASIN() {                                     // Arc Sine
   }
 }
 
-void COS() {                                      // Cosine
+
+void COS()                                        // Cosine
+{
   saveLastX(); 
-  switch (gonioState) {
+  switch (gonioState) 
+  {
     case statDEG:
       stack[X] = cos(stack[X]*2*PI/360);          // Degrees to radians
       break;
@@ -685,9 +805,12 @@ void COS() {                                      // Cosine
   }
 }
 
-void ACOS() {                                     // Arc Cosine
+
+void ACOS()                                       // Arc Cosine
+{
   saveLastX(); 
-  switch (gonioState) {
+  switch (gonioState) 
+  {
     case statDEG:
       stack[X] = acos(stack[X])*360/(2*PI);       // Radians to Degrees
       break;
@@ -702,9 +825,12 @@ void ACOS() {                                     // Arc Cosine
   }
 }
 
-void TAN() {                                      // Tangent
+
+void TAN()                                        // Tangent
+{
   saveLastX(); 
-  switch (gonioState) {
+  switch (gonioState) 
+  {
     case statDEG:
       stack[X] = tan(stack[X]*2*PI/360);          // Degrees to radians
       break;
@@ -719,9 +845,12 @@ void TAN() {                                      // Tangent
   }
 }
 
-void ATAN() {                                     // Arc Tangent
+
+void ATAN()                                       // Arc Tangent
+{
   saveLastX(); 
-  switch (gonioState) {
+  switch (gonioState) 
+  {
     case statDEG:
       stack[X] = atan(stack[X])*360/(2*PI);       // Radians to Degrees
       break;
@@ -740,13 +869,14 @@ void ATAN() {                                     // Arc Tangent
 /* ------------------------------------------------------------------------- *
  *                                                       Statistic functions
  * ------------------------------------------------------------------------- */
-void clearStats() {                            // Clear statistic registters
-  for (int i=statRegLo; i<=statRegHi; i++) {
-    Reg[i] = 0;
-  }
+void clearStats()                                 // Clear statistic registters
+{
+  for (int i=statRegLo; i<=statRegHi; Reg[i++] = 0);
 }
 
-void sigmaPlus() {
+
+void sigmaPlus()                                  // Add number(s) to statistics
+{
   saveLastX(); 
   double x = stack[X];
   double y = stack[Y];
@@ -761,7 +891,9 @@ void sigmaPlus() {
   stack[X] = (double)Reg[statRegLo];
 }
 
-void sigmaMinus() {
+
+void sigmaMinus()                                 // Correct last statistic entry
+{
   saveLastX(); 
   double x = stack[X];
   double y = stack[Y];
@@ -771,18 +903,22 @@ void sigmaMinus() {
   Reg[statRegLo+2] = Reg[statRegLo+2] - (x*x);    // Summation of X squares
   Reg[statRegLo+3] = Reg[statRegLo+3] - y;        // Summation of Y values
   Reg[statRegLo+4] = Reg[statRegLo+4] - (y*y);    // Summation of Y squares
-  Reg[statRegLo+5] = Reg[statRegLo+5] - (x*y);    // Summation of x*yY products
+  Reg[statRegLo+5] = Reg[statRegLo+5] - (x*y);    // Summation of x*y products
 
   stack[X] = (double)Reg[statRegLo];
 }
 
-void meanValues() {                               // Calculate mean
+
+void meanValues()                                 // Calculate mean
+{
   saveLastX(); 
   push( Reg[statRegLo+3] / Reg[statRegLo] );
   push( Reg[statRegLo+1] / Reg[statRegLo] );
 }
 
-void stdDev() {                                   // Standard deviation
+
+void stdDev()                                     // Standard deviation
+{
   double n = Reg[statRegLo];                      // n = number of entries
 
   double M = ( n * Reg[statRegLo+2] ) - ( Reg[statRegLo + 1] * Reg[statRegLo + 1] ); // M = nEx2 - (Ex)2
@@ -795,7 +931,9 @@ void stdDev() {                                   // Standard deviation
   push(sX);
 }
 
-void linRegr() {                                  // Linear Regression
+
+void linRegr()                                    // Linear Regression
+{
   double n = Reg[statRegLo];                      // n = number of entries
 
   double M = ( n * Reg[statRegLo+2] ) - ( Reg[statRegLo + 1] * Reg[statRegLo + 1] ); // M = nEx2 - (Ex)2
@@ -809,7 +947,9 @@ void linRegr() {                                  // Linear Regression
   push(B);
 }
 
-void linEstim() {                                  // Linear Estimation of X
+
+void linEstim()                                   // Linear Estimation of X
+{
   double n = Reg[statRegLo];                      // n = number of entries
 
   double M = ( n * Reg[statRegLo+2] ) - ( Reg[statRegLo + 1] * Reg[statRegLo + 1] ); // M = nEx2 - (Ex)2
@@ -821,11 +961,13 @@ void linEstim() {                                  // Linear Estimation of X
                 / 
                 (  n * M );
 
-  push(r);                                       // push them on the stack
+  push(r);                                        // push them on the stack
   push(yVal);
 }
 
-void permu() {                                   // Permutions Py,x
+
+void permu()                                      // Permutions Py,x
+{
   double x = stack[X];
   double y = stack[Y];
   double Pxy = factorial(y) / factorial(y - x);
@@ -833,7 +975,9 @@ void permu() {                                   // Permutions Py,x
   stack[X] = Pxy;
 }
 
-void combi() {                                   // Combinations Cy,x
+
+void combi()                                      // Combinations Cy,x
+{
   double x = stack[X];
   double y = stack[Y];
   double Cxy = factorial(y) / ( factorial(x) * factorial(y - x) );
@@ -845,7 +989,8 @@ void combi() {                                   // Combinations Cy,x
 /* ------------------------------------------------------------------------- *
  *                                             Programming related functions
  * ------------------------------------------------------------------------- */
-void PSE() {                                      // Pause program 1 second
+void PSE()                                        // Pause program 1 second
+{
   delay(1000);
 }
 
@@ -853,22 +998,27 @@ void PSE() {                                      // Pause program 1 second
 /* ------------------------------------------------------------------------- *
  *                                                      Calculator functions
  * ------------------------------------------------------------------------- */
-void clearRegs() {                                // Clear registters
-  for (int i=0; i<30; i++) {
-    Reg[i] = 0;
-  }
+void clearRegs()                                  // Clear registters
+{
+  for (int i=0; i<30; Reg[i++] = 0);
 }
 
-void saveLastX() {                                // Save X to lastX
+
+void saveLastX()                                  // Save X to lastX
+{
   lastX = stack[X];
 }
 
-void lstX() {                                     // Get lastX to X
+
+void lstX()                                       // Get lastX to X
+{
   rollUp();
   stack[X] = lastX;
 }
 
-void EEX() {                                      // Specify exponent
+
+void EEX()                                        // Specify exponent
+{
   bool positive = true;
   bool goOn = true;
   String numString = "";
@@ -883,16 +1033,16 @@ void EEX() {                                      // Specify exponent
                                                   //      recalculate X
                                                   //        return
 
-  do {
+  do 
+  {
     l = numString.length();
-
     key = keypad.getKey();                        // Read key from keypad
 
-    if (key != 0) {
-
+    if (key != 0) 
+    {
       switch (key)
       {
-        case 0x16:                                  // CHS
+        case 0x16:                                // CHS
         {
           positive = !positive;
           if (positive) 
@@ -904,7 +1054,7 @@ void EEX() {                                      // Specify exponent
           break;
         }
 
-        case 0x35:                                  // BSP
+        case 0x35:                                // BSP
         {
           if (l > 0)
           {
@@ -915,8 +1065,8 @@ void EEX() {                                      // Specify exponent
           break;
         }
 
-        case 0x36:                                  // ENTER
-        case 0x46:                                  // ENTER
+        case 0x36:                                // ENTER
+        case 0x46:                                // ENTER
         {
           exp = numString.toDouble();
           if ( !positive ) exp = -1 * exp;
@@ -947,17 +1097,24 @@ void EEX() {                                      // Specify exponent
 
 }
 
-void STO() {                                      // Store X in register
+
+void STO()                                        // Store X in register
+{
   Reg[getReg()] = stack[X];
 }
 
-void RCL() {                                     // Recall X from register
+
+
+void RCL()                                        // Recall X from register
+{
   saveLastX(); 
   rollUp();
   stack[X] = Reg[getReg()];
 }
 
-void CLX() {                                      // Recall X from register
+
+void CLX()                                        // Clear X register
+{
   saveLastX(); 
   stack[X] = 0;
 }
@@ -967,18 +1124,24 @@ void CLX() {                                      // Recall X from register
 //                                                Display state settings
 //                                                --------------------------
 
-void FIX() {                                      // set # of digits
+
+void FIX()                                        // set # of digits
+{
   int val = 99;
   val = getOneNum();
   if (val >= 0 && val <= 9) { precision = val; }
 }
 
-int getOneNum() {                                 // get one digit
+
+int getOneNum()                                   // get one digit
+{
   int val = 99;
-  do {
+  do 
+  {
     key = keypad.getKey();                        // Read key from keypad
 
-    switch (key) {
+    switch (key) 
+    {
       case 0x47: val = 0; break;
       case 0x37: val = 1; break;
       case 0x38: val = 2; break;
@@ -999,10 +1162,13 @@ int getOneNum() {                                 // get one digit
   return val;
 }
 
-int getReg() {                                    // get Register
+
+int getReg()                                      // get Register
+{
   int val = 0;
   bool getDone = false;
-  do {
+  do 
+  {
     key = keypad.getKey();                        // Read key from keypad
 
     switch (key) {
@@ -1031,33 +1197,48 @@ int getReg() {                                    // get Register
 //                                                Goniometric state settings
 //                                                --------------------------
 
-void DEG() {                                      // Status to Degrees
+void DEG()                                        // Status to Degrees
+{
   gonioState = statDEG; 
   LCD_display(display, 3,17, F("deg") );
 }
 
-void RAD() {                                      // Status to Radians
+
+void RAD()                                        // Status to Radians
+{
   gonioState = statRAD; 
   LCD_display(display, 3,17, F("rad") );
 }
 
-void GRD() {                                      // Status to Gradians
+
+void GRD()                                        // Status to Gradians
+{
   gonioState = statGRD; 
   LCD_display(display, 3,17, F("grd") );
 }
 
-void swapXY() {                                   // Swap X and Y
+
+//                                                --------------------------
+//                                                Stack manipulations
+//                                                --------------------------
+
+void swapXY()                                     // Swap X and Y
+{
   double f = stack[X];
   stack[X] = stack[Y];
   stack[Y] = f;
 }
 
-void push(double val) {                           // Push value on stack
+
+void push(double val)                             // Push value on stack
+{
   rollUp();
   stack[X] = val;
 }
 
-void rollDown() {                                 // Roll stack down
+
+void rollDown()                                   // Roll stack down
+{
   double f = stack[X];
   stack[X] = stack[Y];
   stack[Y] = stack[Z];
@@ -1065,7 +1246,9 @@ void rollDown() {                                 // Roll stack down
   stack[T] = f;
 }
 
-void rollUp() {                                   // Roll stack up
+
+void rollUp()                                     // Roll stack up
+{
   double f = stack[T];
   stack[T] = stack[Z];
   stack[Z] = stack[Y];
@@ -1077,19 +1260,24 @@ void rollUp() {                                   // Roll stack up
 /* ------------------------------------------------------------------------- *
  *                                                     Shift state functions
  * ------------------------------------------------------------------------- */
-void makeShiftF() {
+void makeShiftF() 
+{
 debugln("Making shift state F");
   shiftState = shiftF;
   LCD_display(display, 3, 7, F("f") );
 }
 
-void makeShiftG() {
+
+void makeShiftG() 
+{
 debugln("Making shift state G");
   shiftState = shiftG;
   LCD_display(display, 3, 7, F("g") );
 }
 
-void clearShiftState() {
+
+void clearShiftState() 
+{
   shiftState = noShift;
   LCD_display(display, 3, 7, F(" ") );
 }
@@ -1107,7 +1295,8 @@ void clearShiftState() {
 /* ------------------------------------------------------------------------- *
  *                                                               showStack()
  * ------------------------------------------------------------------------- */
-void showStack() {
+void showStack() 
+{
   String myString;
 
   myString = "Y: ";
@@ -1127,14 +1316,18 @@ void showStack() {
 /* ------------------------------------------------------------------------- *
  *    routine to format number depending on mode and precision - numMakeup()
  * ------------------------------------------------------------------------- */
-String numMakeup(double n) {
+String numMakeup(double n) 
+{
   String numString = "";
   double expn;
   double newNum = 0;
 
-  if (n == 0.0) {
+  if (n == 0.0) 
+  {
     expn = 0.0;
-  } else {
+  } 
+    else 
+  {
     expn = int( log10( abs(n) ) );
   }
 
@@ -1154,7 +1347,7 @@ debug(" newNum = "); debugln(String(newNum,9));
          numString.concat( String( (int)expn) );
 
       } 
-      else if (expn < (-9.0) ) 
+        else if (expn < (-9.0) ) 
       {
 
          newNum = (double)( n * pow(10.0, abs(expn) ) );
@@ -1165,7 +1358,7 @@ debug(" newNum = "); debugln(String(newNum,9));
          numString.concat( String( (int)expn) );
 
       }
-      else 
+        else 
       {
 
 debug("n = "); debugln(n);
@@ -1193,7 +1386,8 @@ debug("n = "); debugln(n);
 /* ------------------------------------------------------------------------- *
  *         Routine to display stuff on the display of choice - LCD_display()
  * ------------------------------------------------------------------------- */
-void LCD_display(LiquidCrystal_I2C screen, int row, int col, String text) {
+void LCD_display(LiquidCrystal_I2C screen, int row, int col, String text) 
+{
   screen.setCursor(col, row);
   screen.print(text);
 }
