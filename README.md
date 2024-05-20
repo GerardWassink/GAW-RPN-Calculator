@@ -47,7 +47,6 @@
 - SCI and ENG notations
 - HYP and HYP-1 functions
 - I and (i) register handling
-- Polar / rectangular conversions
 - Hour, minute, seconds / decimal conversions
 
 ## Implemented functions
