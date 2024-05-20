@@ -42,7 +42,6 @@
  Who knows, perhaps in the future.
 - Programming capabilities
 - SOLVE functionality
-- alphanumeric entry for registernumbers (A, B, ... .A, .B ....)
 - MATRIX functionality
 - SCI and ENG notations
 - HYP and HYP-1 functions
